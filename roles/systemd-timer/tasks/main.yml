@@ -1,0 +1,20 @@
+---
+# code: language=ansible
+
+- name: Copy ansible-pull files to systemd folder
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /etc/systemd/system/
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - ansible-pull.service
+    - ansible-pull.timer
+
+- name: Enable ansible-pull timer
+  ansible.builtin.systemd:
+    unit: ansible-pull.timer
+    daemon_reload: true
+    state: started
+    enabled: true

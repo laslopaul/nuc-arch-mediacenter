@@ -1,0 +1,12 @@
+[Unit]
+Description=Run ansible-pull
+Wants=ansible-pull.timer
+
+[Service]
+User=root
+WorkingDirectory=/root
+Type=oneshot
+ExecStart=/usr/bin/ansible-pull -U https://github.com/laslopaul/nuc-server-ansible -i hosts -e "@vars.yml"
+
+[Install]
+WantedBy=multi-user.target

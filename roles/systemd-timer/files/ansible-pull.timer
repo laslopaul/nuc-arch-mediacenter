@@ -1,0 +1,10 @@
+[Unit]
+Description=Runs ansible-pull service
+Requires=ansible-pull.service
+
+[Timer]
+Unit=ansible-pull.service
+OnUnitInactiveSec=600
+
+[Install]
+WantedBy=timers.target
