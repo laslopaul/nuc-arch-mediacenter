@@ -1,7 +1,6 @@
 ---
 # code: language=ansible
 
-
 - name: "Ensure that group exists: {{ username }}"
   ansible.builtin.group:
     name: "{{ username }}"
