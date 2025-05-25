@@ -1,11 +1,11 @@
 ---
 # code: language=ansible
 
-- name: Create normal user
+- name: "Create user {{ username }}"
   ansible.builtin.user:
     name: "{{ username }}"
-    group: "{{ username }}"
-    groups: "wheel,audio,video,input,pipewire,seat,storage"
+    groups: "{{ username }},wheel,audio,video,input,seat,storage"
+    append: true
     shell: /bin/bash
     create_home: true
     state: present
@@ -30,12 +30,12 @@
     password_lock: true
 
 - name: Disable root login via SSH
-  notify: Restart sshd
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     state: present
     regexp: '^#?PermitRootLogin'
     line: 'PermitRootLogin no'
+  notify: Restart sshd
 
 - name: Ensure .ssh directory exists for user
   ansible.builtin.file:
@@ -50,3 +50,16 @@
     user: "{{ username }}"
     state: present
     key: "{{ ssh_public_key }}"
+
+- name: "Enable console autologin for user {{ username }}"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/getty@tty1.service.d/autologin.conf
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+    line: |
+      [Service]
+      ExecStart=
+      ExecStart=-/usr/bin/agetty --autologin {{ username }} --noclear %I $TERM
+  notify: Reload systemd
