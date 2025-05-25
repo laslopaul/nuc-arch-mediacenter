@@ -6,7 +6,7 @@ Wants=ansible-pull.timer
 User=root
 WorkingDirectory=/root
 Type=oneshot
-ExecStart="/usr/bin/ansible-pull -U {{ repo_url }}"
+ExecStart="/usr/bin/env ansible-pull -U {{ repo_url }}"
 
 [Install]
 WantedBy=multi-user.target
