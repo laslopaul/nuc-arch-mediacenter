@@ -1,2 +1,2 @@
 [local]
-nuc-server   ansible_connection=local
+localhost   ansible_connection=local
