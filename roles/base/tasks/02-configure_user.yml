@@ -4,7 +4,7 @@
 - name: "Create user {{ username }}"
   ansible.builtin.user:
     name: "{{ username }}"
-    groups: "{{ username }},wheel,audio,video,input,seat,storage"
+    groups: "{{ username }},wheel,audio,video,input,storage"
     append: true
     shell: /bin/bash
     create_home: true
