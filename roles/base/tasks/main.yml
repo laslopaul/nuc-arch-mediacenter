@@ -1,0 +1,10 @@
+---
+# code: language=ansible
+
+- name: Enable ansible-pull
+  ansible.builtin.import_tasks: 01-ansible_pull.yml
+  tags: ansible-pull
+
+- name: Configure normal user
+  ansible.builtin.import_tasks: 02-configure_user.yml
+  tags: configure-user

@@ -1,0 +1,52 @@
+---
+# code: language=ansible
+
+- name: Create normal user
+  ansible.builtin.user:
+    name: "{{ username }}"
+    group: "{{ username }}"
+    groups: "wheel,audio,video,input,pipewire,seat,storage"
+    shell: /bin/bash
+    create_home: true
+    state: present
+
+- name: Install sudo
+  community.general.pacman:
+    name: sudo
+    state: present
+    update_cache: true
+
+- name: Configure sudo for passwordless access
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%wheel ALL=\(ALL\) NOPASSWD: ALL'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+
+- name: Disable root login via console
+  ansible.builtin.user:
+    user: root
+    password_lock: true
+
+- name: Disable root login via SSH
+  notify: Restart sshd
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+
+- name: Ensure .ssh directory exists for user
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0700'
+
+- name: Add SSH public key to authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ ssh_public_key }}"

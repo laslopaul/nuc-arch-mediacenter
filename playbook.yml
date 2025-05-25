@@ -1,0 +1,9 @@
+---
+# code: language=ansible
+
+- name: Configure Arch Linux
+  hosts: local
+  roles:
+    - name: Apply base system configuration
+      role: base
+      tags: base
