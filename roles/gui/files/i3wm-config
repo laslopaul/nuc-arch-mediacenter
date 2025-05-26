@@ -1,11 +1,16 @@
 # i3 config for Kodi media center
 font pango:monospace 16
+set $mod Mod4
 floating_modifier Mod1
 bindsym Mod1+d exec dmenu_run
 
 # Workspace names
 set $ws1 "1: Kodi"
 set $ws2 "2: Browser"
+
+# Switch workspaces with Win + Number
+bindsym $mod+1 workspace $ws1
+bindsym $mod+2 workspace $ws2
 
 # Start applications
 exec --no-startup-id kodi
