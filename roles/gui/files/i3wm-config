@@ -18,10 +18,6 @@ exec --no-startup-id "kodi"
 exec --no-startup-id "sleep 3 && firefox --kiosk"
 exec --no-startup-id "udiskie --tray"
 
-# === Reapply Rules in Case of Restarts ===
-exec_always --no-startup-id "i3-msg '[class=\"Kodi\"] move to workspace $ws1; fullscreen enable'"
-exec_always --no-startup-id "i3-msg '[class=\"firefox\"] move to workspace $ws2; fullscreen enable'"
-
 # === Keybindings ===
 set $mod Mod4
 bindsym $mod+1 workspace $ws1
