@@ -16,13 +16,16 @@
     state: present
     update_cache: true
 
-- name: Create .config/i3 directory for user
+- name: Create .config subfolders
   ansible.builtin.file:
-    path: "/home/{{ username }}/.config/i3"
+    path: "/home/{{ username }}/.config/{{ item }}"
     state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0755'
+  loop:
+    - i3
+    - udiskie
 
 - name: Add i3wm config
   ansible.builtin.copy:
