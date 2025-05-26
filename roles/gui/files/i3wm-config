@@ -15,7 +15,7 @@ for_window [class="Firefox"] fullscreen enable
 
 # === Startup Apps (With Delays) ===
 exec --no-startup-id "kodi"
-exec --no-startup-id "firefox"
+exec --no-startup-id "sleep 3 && firefox --class=Firefox --kiosk"
 exec --no-startup-id "udiskie --tray"
 
 # === Reapply Rules in Case of Restarts ===
