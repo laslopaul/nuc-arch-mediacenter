@@ -54,14 +54,9 @@
     mode: '0755'
 
 - name: Configure automatic Xorg start on login
-  ansible.builtin.lineinfile:
+  ansible.builtin.copy:
     dest: "/home/{{ username }}/.bash_profile"
-    insertafter: EOF
-    line: |
-      # Start Xorg if on tty1
-      if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
-        exec startx
-      fi
+    src: bash_profile
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
