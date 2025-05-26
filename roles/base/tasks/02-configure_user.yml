@@ -59,16 +59,10 @@
     key: "{{ ssh_public_key }}"
 
 - name: "Enable console autologin for user {{ username }}"
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/system/getty@tty1.service.d/autologin.conf
-    create: true
-    state: present
-    insertafter: EOF
+  ansible.builtin.template:
+    dest: /etc/systemd/system/getty@tty1.service.d/autologin.conf
+    src: autologin.conf.j2
     owner: root
     group: root
     mode: '0644'
-    line: |
-      [Service]
-      ExecStart=
-      ExecStart=-/usr/bin/agetty --autologin {{ username }} --noclear %I $TERM
   notify: Reload systemd
