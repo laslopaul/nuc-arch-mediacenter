@@ -1,5 +1,5 @@
 # i3 config for Kodi media center
-font pango:monospace 16
+font pango:monospace 32
 set $mod Mod4
 floating_modifier Mod1
 bindsym Mod1+d exec dmenu_run
