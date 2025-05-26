@@ -7,3 +7,7 @@
     - name: Apply base system configuration
       role: base
       tags: base
+
+    - name: Install GUI and applications
+      role: gui
+      tags: gui

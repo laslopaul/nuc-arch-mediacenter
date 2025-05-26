@@ -1,0 +1,30 @@
+# i3 config for Kodi media center
+font pango:monospace 16
+floating_modifier Mod1
+bindsym Mod1+d exec dmenu_run
+
+# Workspace names
+set $ws1 "1: Kodi"
+set $ws2 "2: Browser"
+
+# Start applications
+exec --no-startup-id kodi
+exec --no-startup-id firefox
+exec --no-startup-id udiskie --tray
+
+# Layout for workspaces
+workspace $ws1 layout stacking
+workspace $ws2 layout stacking
+
+# Move applications to workspaces
+assign [class="Kodi"] $ws1
+assign [class="Firefox"] $ws2
+
+# Fullscreen mode
+for_window [class="Kodi"] fullscreen enable
+for_window [class="Firefox"] fullscreen enable
+
+# Media keys (optional)
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle

@@ -1,0 +1,70 @@
+---
+# code: language=ansible
+
+- name: Install required packages
+  community.general.pacman:
+    name:
+      - kodi
+      - firefox
+      - i3-wm
+      - dmenu
+      - udisks2
+      - udiskie
+      - xorg-xinit
+      - xorg-server
+      - xorg-xrandr
+    state: present
+    update_cache: true
+
+- name: Create .config/i3 directory for user
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.config/i3"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+
+- name: Add i3wm config
+  ansible.builtin.copy:
+    src: i3wm-config
+    dest: "/home/{{ username }}/.config/i3/config"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Add udiskie config
+  ansible.builtin.copy:
+    src: udiskie-config.yaml
+    dest: "/home/{{ username }}/.config/udiskie/config.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Configure .xinitrc for automatic i3 startup
+  ansible.builtin.copy:
+    dest: "/home/{{ username }}/.xinitrc"
+    content: |
+      #!/bin/sh
+      exec i3
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+
+- name: Configure automatic Xorg start on login
+  ansible.builtin.lineinfile:
+    dest: "/home/{{ username }}/.bash_profile"
+    insertafter: EOF
+    line: |
+      # Start Xorg if on tty1
+      if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
+        exec startx
+      fi
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Enable udisks2 service
+  ansible.builtin.systemd:
+    name: udisks2
+    enabled: true
+    state: started
