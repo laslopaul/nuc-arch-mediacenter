@@ -5,6 +5,12 @@ xset s off
 xset -dpms
 xset s noblank
 
+# Configure sound card
+CARD_ID=$(pactl list cards | grep 'Card #' | awk '{print $2}' | tr -d '#')
+SINK_ID=$(wpctl status | grep HDMI | sed -n 's/.*\*\s*\([0-9]\+\)\..*/\1/p')
+pactl set-card-profile ${CARD_ID} output:hdmi-stereo
+wpctl set-volume ${SINK_ID} 1.0
+
 # Keyboard layout switching with Caps Lock
 setxkbmap -layout "us,ru" -option "grp:caps_toggle"
 
