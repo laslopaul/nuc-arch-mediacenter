@@ -36,7 +36,9 @@
   changed_when: false
 
 - name: Set audio card profile
-  ansible.builtin.cmd: "pactl set-card-profile {{ card_id }} output:hdmi-stereo"
+  ansible.builtin.command: "pactl set-card-profile {{ card_id }} output:hdmi-stereo"
+  changed_when: false
 
 - name: Change volume to 100%
-  ansible.builtin.cmd: "wpctl set-volume @DEFAULT_SINK@ 1.0"
+  ansible.builtin.command: "wpctl set-volume @DEFAULT_SINK@ 1.0"
+  changed_when: false
