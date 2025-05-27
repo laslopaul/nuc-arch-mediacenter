@@ -29,6 +29,8 @@
     - wireplumber
 
 - name: Get ID of audio card
+  become: true
+  become_user: "{{ username }}"
   ansible.builtin.shell: |
     set -eo pipefail
     pactl list cards | grep 'Card #' | awk '{print $2}' | tr -d '#'
@@ -36,9 +38,13 @@
   changed_when: false
 
 - name: Set audio card profile
+  become: true
+  become_user: "{{ username }}"
   ansible.builtin.command: "pactl set-card-profile {{ card_id }} output:hdmi-stereo"
   changed_when: false
 
 - name: Change volume to 100%
+  become: true
+  become_user: "{{ username }}"
   ansible.builtin.command: "wpctl set-volume @DEFAULT_SINK@ 1.0"
   changed_when: false
