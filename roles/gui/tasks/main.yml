@@ -36,6 +36,14 @@
     group: "{{ username }}"
     mode: '0644'
 
+- name: Add i3wm restart script
+  ansible.builtin.copy:
+    src: i3-restart.sh
+    dest: "/home/{{ username }}/.config/i3/i3-restart.sh"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+
 - name: Add udiskie config
   ansible.builtin.copy:
     src: udiskie-config.yaml
