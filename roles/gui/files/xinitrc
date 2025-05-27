@@ -5,5 +5,8 @@ xset s off
 xset -dpms
 xset s noblank
 
+# Keyboard layout switching with Caps Lock
+setxkbmap -layout "us,ru" -option "grp:caps_toggle"
+
 # Start i3wm
 exec i3
