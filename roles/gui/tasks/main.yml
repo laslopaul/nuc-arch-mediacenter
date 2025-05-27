@@ -8,7 +8,6 @@
       - firefox
       - i3-wm
       - alacritty
-      - dmenu
       - udisks2
       - udiskie
       - xorg-xinit
