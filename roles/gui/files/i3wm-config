@@ -1,4 +1,3 @@
-# i3 config for Kodi media center
 font pango:monospace 16
 floating_modifier Mod1
 bindsym Mod1+d exec dmenu_run
@@ -9,18 +8,17 @@ set $ws2 "2: Browser"
 
 # === Workspace Rules (Applied FIRST) ===
 assign [class="Kodi"] $ws1
-assign [class="Firefox"] $ws2
+assign [class="firefox"] $ws2
 for_window [class="Kodi"] fullscreen enable
 for_window [class="firefox"] fullscreen enable
 
 # === Startup Apps (With Delays) ===
-exec --no-startup-id "kodi"
-exec --no-startup-id "sleep 3 && firefox --kiosk"
 exec --no-startup-id "udiskie --tray"
+exec --no-startup-id "i3-msg workspace $ws2"
+exec --no-startup-id "sleep 3 && firefox"
+exec --no-startup-id "kodi"
 
 # === Keybindings ===
 set $mod Mod4
 bindsym $mod+1 workspace $ws1
 bindsym $mod+2 workspace $ws2
-bindsym $mod+Shift+1 move container to workspace $ws1
-bindsym $mod+Shift+2 move container to workspace $ws2
