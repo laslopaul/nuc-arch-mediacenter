@@ -12,3 +12,7 @@
 - name: Configure udiskie
   ansible.builtin.import_tasks: 03-udiskie.yml
   tags: udiskie
+
+- name: Configure pipewire
+  ansible.builtin.import_tasks: 04-pipewire.yml
+  tags: pipewire
