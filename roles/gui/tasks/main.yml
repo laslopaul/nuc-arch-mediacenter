@@ -41,9 +41,7 @@
 - name: Configure .xinitrc for automatic i3 startup
   ansible.builtin.copy:
     dest: "/home/{{ username }}/.xinitrc"
-    content: |
-      #!/bin/sh
-      exec i3
+    src: xinitrc
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0755'

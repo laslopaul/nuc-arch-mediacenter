@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Disable screen blanking and power management
+xset s off
+xset -dpms
+xset s noblank
+
+# Start i3wm
+exec i3
