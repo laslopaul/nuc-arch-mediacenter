@@ -27,3 +27,9 @@ exec --no-startup-id "kodi"
 set $mod Mod4
 bindsym $mod+1 workspace $ws1
 bindsym $mod+2 workspace $ws2
+bindsym $mod+3 workspace $ws3
+
+# Power actions
+bindsym $mod+Shift+r exec --no-startup-id systemctl reboot
+bindsym $mod+Shift+p exec --no-startup-id systemctl poweroff
+bindsym $mod+Shift+s exec --no-startup-id systemctl suspend
