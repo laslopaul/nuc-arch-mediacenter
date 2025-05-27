@@ -5,15 +5,20 @@ bindsym Mod1+d exec dmenu_run
 # Workspace names
 set $ws1 "1: Kodi"
 set $ws2 "2: Browser"
+set $ws3 "3: Terminal"
 
 # === Workspace Rules (Applied FIRST) ===
 assign [class="Kodi"] $ws1
 assign [class="firefox"] $ws2
+assign [class="Alacritty"] $ws3
 for_window [class="Kodi"] fullscreen enable
 for_window [class="firefox"] fullscreen enable
+for_window [class="Alacritty"] fullscreen enable
 
 # === Startup Apps (With Delays) ===
 exec --no-startup-id "udiskie --tray"
+exec --no-startup-id "i3-msg workspace $ws3"
+exec --no-startup-id "alacritty"
 exec --no-startup-id "i3-msg workspace $ws2"
 exec --no-startup-id "sleep 3 && firefox"
 exec --no-startup-id "kodi"
