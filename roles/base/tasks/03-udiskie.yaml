@@ -1,0 +1,32 @@
+---
+# code: language=ansible
+
+- name: Install required packages
+  community.general.pacman:
+    name:
+      - udisks2
+      - udiskie
+    state: present
+    update_cache: true
+
+- name: Create .config subfolder
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.config/udiskie"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+
+- name: Add udiskie config
+  ansible.builtin.copy:
+    src: udiskie-config.yaml
+    dest: "/home/{{ username }}/.config/udiskie/config.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Enable udisks2 service
+  ansible.builtin.systemd:
+    name: udisks2
+    enabled: true
+    state: started

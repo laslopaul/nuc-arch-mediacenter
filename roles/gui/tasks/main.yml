@@ -8,24 +8,19 @@
       - firefox
       - i3-wm
       - alacritty
-      - udisks2
-      - udiskie
       - xorg-xinit
       - xorg-server
       - xorg-xrandr
     state: present
     update_cache: true
 
-- name: Create .config subfolders
+- name: Create .config subfolder
   ansible.builtin.file:
-    path: "/home/{{ username }}/.config/{{ item }}"
+    path: "/home/{{ username }}/.config/i3"
     state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0755'
-  loop:
-    - i3
-    - udiskie
 
 - name: Add i3wm config
   ansible.builtin.copy:
@@ -42,14 +37,6 @@
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0755'
-
-- name: Add udiskie config
-  ansible.builtin.copy:
-    src: udiskie-config.yaml
-    dest: "/home/{{ username }}/.config/udiskie/config.yml"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0644'
 
 - name: Configure .xinitrc for automatic i3 startup
   ansible.builtin.copy:
@@ -68,9 +55,3 @@
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
-
-- name: Enable udisks2 service
-  ansible.builtin.systemd:
-    name: udisks2
-    enabled: true
-    state: started
