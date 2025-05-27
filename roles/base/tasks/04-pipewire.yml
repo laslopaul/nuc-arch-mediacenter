@@ -13,6 +13,8 @@
     update_cache: true
 
 - name: Enable PipeWire services for user
+  become: true
+  become_user: "{{ username }}"
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
   ansible.builtin.systemd:
@@ -27,6 +29,8 @@
     - wireplumber
 
 - name: Get ID of audio card
+  become: true
+  become_user: "{{ username }}"
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
   ansible.builtin.shell: |
@@ -36,12 +40,16 @@
   changed_when: false
 
 - name: Set audio card profile
+  become: true
+  become_user: "{{ username }}"
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
   ansible.builtin.command: "pactl set-card-profile {{ card_id }} output:hdmi-stereo"
   changed_when: false
 
 - name: Change volume to 100%
+  become: true
+  become_user: "{{ username }}"
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
   ansible.builtin.command: "wpctl set-volume @DEFAULT_SINK@ 1.0"
