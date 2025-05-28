@@ -1,6 +1,9 @@
-# Font settings
+[window]
+decorations = "None"
+startup_mode = "Fullscreen"
+
 [font]
-size = 20.0
+size = 30.0
 
 [font.bold]
 family = "Hack"

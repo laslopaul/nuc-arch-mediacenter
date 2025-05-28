@@ -12,7 +12,7 @@ assign [class="firefox"] $ws2
 assign [class="Alacritty"] $ws3
 for_window [class="Kodi"] fullscreen enable
 for_window [class="firefox"] fullscreen enable
-for_window [class="Alacritty"] fullscreen enable
+#for_window [class="Alacritty"] fullscreen enable
 
 # === Startup Apps (With Delays) ===
 exec --no-startup-id "udiskie --tray"
