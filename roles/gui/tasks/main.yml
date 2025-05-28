@@ -8,6 +8,7 @@
       - firefox
       - i3-wm
       - alacritty
+      - ttf-hack
       - xorg-xinit
       - xorg-server
       - xorg-xrandr
@@ -15,18 +16,29 @@
     state: present
     update_cache: true
 
-- name: Create .config subfolder
+- name: Create .config subfolders
   ansible.builtin.file:
-    path: "/home/{{ username }}/.config/i3"
+    path: "/home/{{ username }}/.config/{{ item }}"
     state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0755'
+  loop:
+    - i3
+    - alacritty
 
 - name: Add i3wm config
   ansible.builtin.copy:
     src: i3wm-config
     dest: "/home/{{ username }}/.config/i3/config"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Add alacritty config
+  ansible.builtin.copy:
+    src: alacritty.toml
+    dest: "/home/{{ username }}/.config/alacritty/alacritty.toml"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
