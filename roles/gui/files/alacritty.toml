@@ -1,6 +1,8 @@
 [window]
-decorations = "None"
 startup_mode = "Fullscreen"
+
+[cursor]
+style = {"Block", "On"}
 
 [font]
 size = 30.0
