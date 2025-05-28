@@ -5,6 +5,9 @@ padding = {x = 5, y = 5}
 [cursor]
 style = {shape = "Block", blinking = "Always"}
 
+[env]
+WINIT_X11_SCALE_FACTOR = "1.0"
+
 [font]
 size = 30.0
 
