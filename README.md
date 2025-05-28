@@ -4,21 +4,27 @@ Ansible configuration for Intel NUC mediacenter running on Arch Linux.
 
 ## Components
 
-1. Kodi
-2. Firefox
-3. Docker applications (TBD)
+1. i3 window manager + Alacritty terminal emulator
+2. Pipewire audio server
+3. Kodi
+4. Firefox
+5. Docker applications (TBD)
 
-## Installation
+## Install base system
 
-The configuration is based on `ansible-pull`, so the following dependencies should be installed on the target machine:
+Boot from Arch Linux installation medium and run `arch-install.sh` script from this repo:
 
 ```bash
-# pacman -Sy ansible git python-passlib
+ROOT_PASSWORD="mypassword" bash arch-install.sh
 ```
 
-Then you should pass the password for `kodi` user in `KODI_PASSWORD` env variable, and initialize `ansible-pull`:
+## Apply configuration
+
+After booting to the base system, pass the password for `kodi` user in `KODI_PASSWORD` env variable, and initialize `ansible-pull`:
 
 ```bash
 # export KODI_PASSWORD="mypassword"
 # ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter
 ```
+
+Later on, `ansible-pull` will automatically update configuration every 10 minutes via systemd service.
