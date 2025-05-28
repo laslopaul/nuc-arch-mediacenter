@@ -9,6 +9,9 @@ wpctl set-volume ${SINK_ID} 1.0
 # Keyboard layout switching with Caps Lock
 setxkbmap -layout "us,ru" -option "grp:caps_toggle"
 
+# Launch DBus for Kodi
+eval "$(dbus-launch --sh-syntax --exit-with-session)"
+
 # Disable screen blanking and power management
 xset s off
 xset -dpms
