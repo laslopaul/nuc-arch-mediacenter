@@ -16,7 +16,7 @@ for_window [class="Alacritty"] fullscreen enable
 
 # === Startup Apps (With Delays) ===
 exec --no-startup-id "udiskie --tray"
-exec --no-startup-id "alacritty"
+exec --no-startup-id "sleep 3 && alacritty"
 exec --no-startup-id "sleep 3 && firefox"
 exec --no-startup-id "kodi"
 
