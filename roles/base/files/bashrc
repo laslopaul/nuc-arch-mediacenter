@@ -1,0 +1,13 @@
+#
+# ~/.bashrc
+#
+
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
+
+export TERM=xterm-256color
+
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+force_color_prompt=yes
+PS1='\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ '

@@ -7,7 +7,7 @@
 
 - name: Configure normal user
   ansible.builtin.import_tasks: 02-configure_user.yml
-  tags: configure-user
+  tags: user
 
 - name: Configure udiskie
   ansible.builtin.import_tasks: 03-udiskie.yml

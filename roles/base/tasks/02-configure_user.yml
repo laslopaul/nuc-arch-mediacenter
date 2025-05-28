@@ -74,3 +74,14 @@
     owner: root
     group: root
     mode: '0644'
+
+- name: Enable colors in terminal for root and normal user
+  ansible.builtin.copy:
+    dest: "{{ item.home }}/.bashrc"
+    src: bashrc
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: '0644'
+  loop:
+    - { home: '/root', owner: 'root' }
+    - { home: "/home/{{ username }}", owner: "{{ username }}" }
