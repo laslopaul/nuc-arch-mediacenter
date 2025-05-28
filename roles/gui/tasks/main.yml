@@ -11,6 +11,7 @@
       - xorg-xinit
       - xorg-server
       - xorg-xrandr
+      - xorg-xset
     state: present
     update_cache: true
 

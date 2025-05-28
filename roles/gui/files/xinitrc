@@ -1,10 +1,5 @@
 #!/bin/sh
 
-# Disable screen blanking and power management
-xset s off
-xset -dpms
-xset s noblank
-
 # Configure sound card
 CARD_ID=$(pactl list cards | grep 'Card #' | awk '{print $2}' | tr -d '#')
 SINK_ID=$(wpctl status | grep HDMI | sed -n 's/.*\*\s*\([0-9]\+\)\..*/\1/p')
@@ -13,6 +8,11 @@ wpctl set-volume ${SINK_ID} 1.0
 
 # Keyboard layout switching with Caps Lock
 setxkbmap -layout "us,ru" -option "grp:caps_toggle"
+
+# Disable screen blanking and power management
+xset s off
+xset -dpms
+xset s noblank
 
 # Start i3wm
 exec i3
