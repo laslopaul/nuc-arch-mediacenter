@@ -1,5 +1,6 @@
 [window]
 startup_mode = "Fullscreen"
+padding = {x = 5, y = 5}
 
 [cursor]
 style = {shape = "Block", blinking = "Always"}
