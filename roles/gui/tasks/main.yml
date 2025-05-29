@@ -66,3 +66,11 @@
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
+
+- name: Enable TearFree option in Xorg
+  ansible.builtin.copy:
+    dest: /etc/X11/xorg.conf.d/20-intel.conf
+    src: 20-intel.conf
+    owner: root
+    group: root
+    mode: '0644'
