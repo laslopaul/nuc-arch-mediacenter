@@ -30,3 +30,8 @@
     name: udisks2
     enabled: true
     state: started
+
+- name: Enable fstrim
+  ansible.builtin.systemd:
+    name: fstrim.timer
+    enabled: true
