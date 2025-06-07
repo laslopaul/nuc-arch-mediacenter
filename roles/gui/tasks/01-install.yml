@@ -1,0 +1,23 @@
+---
+# code: language=ansible
+
+- name: Install i3 and Xorg
+  community.general.pacman:
+    name:
+      - i3-wm
+      - ttf-hack
+      - xorg-xinit
+      - xorg-server
+      - xorg-xrandr
+      - xorg-xset
+    state: present
+    update_cache: true
+
+- name: Install apps
+  community.general.pacman:
+    name:
+      - kodi
+      - firefox
+      - alacritty
+    state: present
+    update_cache: true

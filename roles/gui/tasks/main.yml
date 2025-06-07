@@ -1,76 +1,10 @@
 ---
 # code: language=ansible
 
-- name: Install required packages
-  community.general.pacman:
-    name:
-      - kodi
-      - firefox
-      - i3-wm
-      - alacritty
-      - ttf-hack
-      - xorg-xinit
-      - xorg-server
-      - xorg-xrandr
-      - xorg-xset
-    state: present
-    update_cache: true
+- name: Install GUI
+  ansible.builtin.import_tasks: 01-install.yml
+  tags: gui-install
 
-- name: Create .config subfolders
-  ansible.builtin.file:
-    path: "/home/{{ username }}/.config/{{ item }}"
-    state: directory
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-  loop:
-    - i3
-    - alacritty
-
-- name: Add i3wm config
-  ansible.builtin.copy:
-    src: i3wm-config
-    dest: "/home/{{ username }}/.config/i3/config"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0644'
-
-- name: Add alacritty config
-  ansible.builtin.copy:
-    src: alacritty.toml
-    dest: "/home/{{ username }}/.config/alacritty/alacritty.toml"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0644'
-
-- name: Add i3wm restart script
-  ansible.builtin.copy:
-    src: i3-restart.sh
-    dest: "/home/{{ username }}/.config/i3/i3-restart.sh"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-
-- name: Configure .xinitrc for automatic i3 startup
-  ansible.builtin.copy:
-    dest: "/home/{{ username }}/.xinitrc"
-    src: xinitrc
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-
-- name: Configure automatic Xorg start on login
-  ansible.builtin.copy:
-    dest: "/home/{{ username }}/.bash_profile"
-    src: bash_profile
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0644'
-
-- name: Enable TearFree option in Xorg
-  ansible.builtin.copy:
-    dest: /etc/X11/xorg.conf.d/20-intel.conf
-    src: 20-intel.conf
-    owner: root
-    group: root
-    mode: '0644'
+- name: Configure GUI
+  ansible.builtin.import_tasks: 02-config.yml
+  tags: gui-config
