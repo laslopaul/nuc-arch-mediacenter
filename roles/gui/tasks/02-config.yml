@@ -4,7 +4,7 @@
 - name: Copy config files
   ansible.builtin.copy:
     src: "{{ item }}"
-    dest: "/home/{{ username }}/{{ item }}"
+    dest: "/home/{{ username }}/.config/"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
