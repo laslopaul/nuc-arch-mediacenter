@@ -1,15 +1,6 @@
 ---
 # code: language=ansible
 
-- name: Create .config subfolders
-  ansible.builtin.file:
-    path: "/home/{{ username }}/.config/{{ item }}"
-    state: directory
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-  loop: "{{ subfolders[desktop] }}"
-
 - name: Copy config files
   ansible.builtin.copy:
     src: "{{ item }}"
@@ -17,7 +8,8 @@
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
-  loop: "{{ configs[desktop] }}"
+    directory_mode: '0755'
+  loop: "{{ subfolders[desktop] }}"
 
 - name: Copy .bash_profile
   ansible.builtin.template:
@@ -27,10 +19,9 @@
     group: "{{ username }}"
     mode: '0644'
 
-- name: Copy executable config files
+- name: Set executable permissions
   ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "/home/{{ username }}/{{ item }}"
+    path: "/home/{{ username }}/{{ item }}"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0755'

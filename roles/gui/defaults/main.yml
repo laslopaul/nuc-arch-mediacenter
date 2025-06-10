@@ -8,14 +8,7 @@ desktop: labwc
 subfolders:
   i3: ["i3", "alacritty"]
   labwc: ["labwc", "alacritty"]
-configs:
-  i3:
-    - .config/alacritty/alacritty.toml
-    - .config/i3/config
-  labwc:
-    - .config/alacritty/alacritty.toml
-    - .config/labwc/rc.xml
-    - .config/labwc/menu.xml
+
 configs_exec:
   i3:
     - .config/i3/i3-restart.sh
