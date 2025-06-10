@@ -5,13 +5,20 @@
   community.general.pacman:
     name:
       - i3-wm
-      - ttf-hack
       - xorg-xinit
       - xorg-server
       - xorg-xrandr
       - xorg-xset
     state: present
     update_cache: true
+  when: desktop == 'i3'
+
+- name: Install labwc (Wayland)
+  community.general.pacman:
+    name: labwc
+    state: present
+    update_cache: true
+  when: desktop == 'labwc'
 
 - name: Install apps
   community.general.pacman:
@@ -19,5 +26,6 @@
       - kodi
       - firefox
       - alacritty
+      - ttf-hack
     state: present
     update_cache: true

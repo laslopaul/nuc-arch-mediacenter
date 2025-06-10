@@ -1,0 +1,45 @@
+<labwc_config>
+  <core>
+    <decoration>client</decoration>
+  </core>
+
+  <theme>
+    <font>
+        <name>Hack</name>
+        <size>30</size>
+    </font>
+  </theme>
+
+  <desktops number="3" />
+
+  <windowRules>
+    <!-- Kodi in workspace 1 (fullscreen) -->
+    <windowRule identifier="Kodi">
+            <fullscreen>yes</fullscreen>
+            <action name="SendToDesktop" to="1" follow="yes" wrap="yes" />
+    </windowRule>
+
+    <!-- Firefox in workspace 2 (fullscreen) -->
+    <windowRule identifier="firefox">
+            <fullscreen>yes</fullscreen>
+            <action name="SendToDesktop" to="2" follow="no" wrap="yes" />
+    </windowRule>
+
+    <!-- Alacritty in workspace 3 (fullscreen) -->
+    <windowRule identifier="Alacritty">
+            <fullscreen>yes</fullscreen>
+            <action name="SendToDesktop" to="3" follow="no" wrap="yes" />
+    </windowRule>
+  </windowRules>
+
+  <keyboard>
+    <keybind key="W-1"><action name="GoToDesktop" to="1" /></keybind>
+    <keybind key="W-2"><action name="GoToDesktop" to="2" /></keybind>
+    <keybind key="W-3"><action name="GoToDesktop" to="3" /></keybind>
+    <keybind key="W-S-s"><action name="Execute" command="systemctl suspend" /></keybind>
+    <keybind key="W-S-p"><action name="Execute" command="systemctl poweroff" /></keybind>
+    <keybind key="W-S-r"><action name="Execute" command="systemctl reboot" /></keybind>
+    <keybind key="W-S-q"><action name="Exit" /></keybind>
+    <keybind key="W-S-x"><action name="Reconfigure" /></keybind>
+  </keyboard>
+</labwc_config>

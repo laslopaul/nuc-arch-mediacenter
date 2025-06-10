@@ -1,0 +1,20 @@
+# Configure sound card
+CARD_ID=$(pactl list cards | grep 'Card #' | awk '{print $2}' | tr -d '#')
+SINK_ID=$(wpctl status | grep HDMI | sed -n 's/.*\*\s*\([0-9]\+\)\..*/\1/p')
+pactl set-card-profile ${CARD_ID} output:hdmi-stereo
+wpctl set-volume ${SINK_ID} 1.0
+
+# Launch udiskie
+udiskie --tray &
+sleep 1
+
+# Launch Kodi in workspace 1
+kodi &
+sleep 3
+
+# Launch Firefox in workspace 2
+firefox &
+sleep 3
+
+# Launch Alacritty in workspace 3
+alacritty &

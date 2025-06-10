@@ -1,0 +1,16 @@
+#
+# ~/.bash_profile
+#
+
+[[ -f ~/.bashrc ]] && . ~/.bashrc
+
+{% if desktop == 'i3' -%}
+# Start Xorg if on tty1
+if [[ -z $DISPLAY ]] && [[ $(tty) = /dev/tty1 ]]; then
+    exec startx
+fi
+{%- elif desktop == 'labwc' -%}
+if [ -z "$WAYLAND_DISPLAY" ] && [ -n "$XDG_VTNR" ] && [ "$XDG_VTNR" -eq 1 ] ; then
+    exec dbus-run-session labwc
+fi
+{%- endif %}

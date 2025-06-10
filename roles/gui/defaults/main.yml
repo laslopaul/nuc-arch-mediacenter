@@ -1,0 +1,5 @@
+---
+# code: language=ansible
+
+# supported variants: i3 and labwc
+desktop: labwc

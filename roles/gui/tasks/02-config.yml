@@ -1,36 +1,57 @@
 ---
 # code: language=ansible
 
-- name: Create .config subfolders
-  ansible.builtin.file:
-    path: "/home/{{ username }}/.config/{{ item }}"
-    state: directory
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-  loop:
-    - i3
-    - alacritty
+vars:
+  subfolders:
+    i3: ["i3", "alacritty"]
+    labwc: ["labwc", "alacritty"]
+  configs:
+    i3:
+      - .config/alacritty/alacritty.toml
+      - .config/i3/config
+    labwc:
+      - .config/alacritty/alacritty.toml
+      - .config/labwc/rc.xml
+      - .config/labwc/menu.xml
+  configs_exec:
+    i3:
+      - .config/i3/i3-restart.sh
+      - .xinitrc
+    labwc:
+      - .config/labwc/autostart
 
-- name: Copy config files
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "/home/{{ username }}/{{ item }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0644'
-  loop:
-    - .config/alacritty/alacritty.toml
-    - .config/i3/config
-    - .bash_profile
+tasks:
+  - name: Create .config subfolders
+    ansible.builtin.file:
+      path: "/home/{{ username }}/.config/{{ item }}"
+      state: directory
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0755'
+    loop: "{{ subfolders[desktop] }}"
 
-- name: Copy executable config files
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "/home/{{ username }}/{{ item }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-  loop:
-    - .config/i3/i3-restart.sh
-    - .xinitrc
+  - name: Copy config files
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: "/home/{{ username }}/{{ item }}"
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0644'
+    loop: "{{ configs[desktop] }}"
+
+  - name: Copy .bash_profile
+    ansible.builtin.template:
+      src: .bash_profile.j2
+      dest: "/home/{{ username }}/.bash_profile"
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0644'
+
+  - name: Copy executable config files
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: "/home/{{ username }}/{{ item }}"
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0755'
+    loop: "{{ configs_exec[desktop] }}"
