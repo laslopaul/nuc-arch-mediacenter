@@ -8,6 +8,7 @@ services:
     ports:
       - "443:443"
       - "8080:8080"
+      - "80:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ docker_path }}/traefik/ssl:/certs:ro"
