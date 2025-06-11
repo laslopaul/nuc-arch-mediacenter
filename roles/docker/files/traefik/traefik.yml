@@ -9,10 +9,6 @@ tls:
         certFile: "/certs/cert.pem"
         keyFile: "/certs/cert.key"
 
-api:
-  dashboard: true
-  insecure: true
-
 providers:
   docker:
     exposedByDefault: false
