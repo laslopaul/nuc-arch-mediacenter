@@ -4,19 +4,14 @@ services:
     container_name: traefik
     restart: unless-stopped
     command:
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.websecure.http.tls=true"
-      - "--entrypoints.websecure.http.tls.certificates[0].certFile=/certs/selfsigned.crt"
-      - "--entrypoints.websecure.http.tls.certificates[0].keyFile=/certs/selfsigned.key"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--api.dashboard=true"
+      - "--configFile=/etc/traefik/traefik.yml"
     ports:
       - "443:443"
       - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ docker_path }}/traefik/ssl:/certs:ro"
+      - "{{ docker_path }}/traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
     networks:
       - traefik
 

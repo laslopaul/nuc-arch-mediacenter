@@ -40,6 +40,14 @@
     - "{{ docker_path }}/traefik/ssl/cert.key"
     - "{{ docker_path }}/traefik/ssl/cert.pem"
 
+- name: Add traefik config file
+  ansible.builtin.copy:
+    src: traefik/traefik.yaml
+    dest: "{{ docker_path }}/traefik/traefik.yaml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
 - name: Create Docker Compose file
   ansible.builtin.template:
     src: traefik-compose.yml.j2

@@ -1,0 +1,17 @@
+entryPoints:
+  websecure:
+    address: ":443"
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: "/certs/cert.pem"
+        keyFile: "/certs/cert.key"
+
+api:
+  dashboard: true
+
+providers:
+  docker:
+    exposedByDefault: false
