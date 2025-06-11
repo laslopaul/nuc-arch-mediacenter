@@ -43,7 +43,7 @@
 
 - name: Add traefik config file
   ansible.builtin.copy:
-    src: traefik/traefik.yaml
+    src: traefik/traefik.yml
     dest: "{{ docker_path }}/traefik/traefik.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
