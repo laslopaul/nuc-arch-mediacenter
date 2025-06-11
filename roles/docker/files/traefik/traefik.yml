@@ -11,7 +11,8 @@ tls:
 
 api:
   dashboard: true
+  insecure: true
 
 providers:
   docker:
-    exposedByDefault: true
+    exposedByDefault: false
