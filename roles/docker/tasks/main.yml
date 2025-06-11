@@ -1,0 +1,10 @@
+---
+# code: language=ansible
+
+- name: Install Docker
+  ansible.builtin.import_tasks: 01-install.yml
+  tags: docker-install
+
+- name: Install Traefik
+  ansible.builtin.import_tasks: 02-traefik.yml
+  tags: traefik

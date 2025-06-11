@@ -1,0 +1,46 @@
+---
+# code: language=ansible
+
+- name: Add folders for Traefik files
+  ansible.builtin.file:
+    path: "/home/{{ username }}/docker/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+  loop:
+    - traefik
+    - traefik/ssl
+
+- name: Create private key (RSA, 4096 bits)
+  community.crypto.openssl_privatekey:
+    path: "{{ docker_path }}/traefik/ssl/cert.key"
+
+- name: Create CSR for self-signed certificate
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ docker_path }}/traefik/ssl/cert.key"
+    common_name: "{{ domain }}"
+    subject_alt_name:
+      - "DNS:*.{{ domain }}"
+  register: csr
+
+- name: Create self-signed certificate from CSR
+  community.crypto.x509_certificate:
+    path: "{{ docker_path }}/traefik/ssl/cert.pem"
+    csr_content: "{{ csr.csr }}"
+    privatekey_path: "{{ docker_path }}/traefik/ssl/cert.key"
+    provider: selfsigned
+
+- name: Create Docker Compose file
+  ansible.builtin.template:
+    src: traefik-compose.yml.j2
+    dest: "{{ docker_path }}/traefik/docker-compose.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Launch Traefik service
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/traefik"
+    recreate: always
+    remove_orphans: true

@@ -11,3 +11,7 @@
     - name: Install GUI and applications
       role: gui
       tags: gui
+
+    - name: Install Docker and services
+      role: docker
+      tags: docker

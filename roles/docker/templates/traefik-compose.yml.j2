@@ -1,0 +1,25 @@
+services:
+  traefik:
+    image: {{ images['traefik'] }}
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--api.dashboard=true"
+      - "--tls.stores.default.defaultcertificate.certfile=/certs/cert.pem"
+      - "--tls.stores.default.defaultcertificate.keyfile=/certs/cert.key"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ docker_path }}/traefik/ssl:/certs:ro"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    driver: bridge
