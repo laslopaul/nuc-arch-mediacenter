@@ -23,6 +23,7 @@
     subject_alt_name:
       - "DNS:*.{{ domain }}"
   register: csr
+  when: lookup('ansible.builtin.file', "./cert.pem", errors='ignore') != ''
 
 - name: Create self-signed certificate from CSR
   community.crypto.x509_certificate:
