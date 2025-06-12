@@ -60,5 +60,5 @@
 - name: Launch Traefik service
   community.docker.docker_compose_v2:
     project_src: "{{ docker_path }}/traefik"
-    recreate: always
-    remove_orphans: true
+    recreate: auto
+    remove_orphans: false
