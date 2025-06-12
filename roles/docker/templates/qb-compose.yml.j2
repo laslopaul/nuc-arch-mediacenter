@@ -14,7 +14,7 @@ services:
       - "6881:6881/udp"
     restart: unless-stopped
     networks:
-      - traefik
+      - traefik_traefik
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.qb.rule=Host(`qb.{{ domain }}`)"
