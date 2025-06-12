@@ -8,3 +8,7 @@
 - name: Install Traefik
   ansible.builtin.import_tasks: 02-traefik.yml
   tags: traefik
+
+- name: Install qbittorrent
+  ansible.builtin.import_tasks: 03-qbittorrent.yml
+  tags: qb

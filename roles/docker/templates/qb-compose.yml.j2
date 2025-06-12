@@ -1,0 +1,27 @@
+services:
+  qbittorrent:
+    image: {{ images['qbittorrent'] }}
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=8080
+    volumes:
+      - {{ docker_path }}/qb/config:/config
+      - /home/{{ username }}/Library:/downloads
+    ports:
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qb.rule=Host(`qb.{{ domain }}`)"
+      - "traefik.http.routers.qb.entrypoints=websecure"
+      - "traefik.http.routers.qb.tls=true"
+      - "traefik.http.services.qb.loadbalancer.server.port=8080"
+
+networks:
+  traefik:
+    external: true

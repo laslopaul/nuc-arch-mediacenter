@@ -1,0 +1,27 @@
+---
+# code: language=ansible
+
+- name: Add folders for Traefik files
+  ansible.builtin.file:
+    path: "/home/{{ username }}/docker/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+  loop:
+    - qb
+    - qb/config
+
+- name: Create Docker Compose file
+  ansible.builtin.template:
+    src: qb-compose.yml.j2
+    dest: "{{ docker_path }}/qb/docker-compose.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Launch Qbittorrent service
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/qb"
+    recreate: auto
+    remove_orphans: false
