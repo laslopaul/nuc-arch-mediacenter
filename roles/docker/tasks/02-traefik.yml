@@ -43,8 +43,8 @@
 
 - name: Add traefik config file
   ansible.builtin.copy:
-    src: traefik/traefik.yml
-    dest: "{{ docker_path }}/traefik/traefik.yml"
+    src: traefik/
+    dest: "{{ docker_path }}/traefik"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
@@ -58,8 +58,6 @@
     mode: '0644'
 
 - name: Launch Traefik service
-  become_user: "{{ username }}"
-  become: true
   community.docker.docker_compose_v2:
     project_src: "{{ docker_path }}/traefik"
     recreate: auto

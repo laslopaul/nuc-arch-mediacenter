@@ -2,16 +2,12 @@ entryPoints:
   websecure:
     address: ":443"
 
-tls:
-  stores:
-    default:
-      defaultCertificate:
-        certFile: "/certs/cert.crt"
-        keyFile: "/certs/cert.key"
-
 providers:
   docker:
     exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
 
 log:
   level: DEBUG

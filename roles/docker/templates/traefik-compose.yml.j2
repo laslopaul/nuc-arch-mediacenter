@@ -11,6 +11,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ docker_path }}/traefik/ssl:/certs:ro"
       - "{{ docker_path }}/traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "{{ docker_path }}/traefik/dynamic:/etc/traefik/dynamic"
     networks:
       - traefik
 
