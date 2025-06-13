@@ -30,7 +30,9 @@
     path: "{{ docker_path }}/traefik/ssl/cert.crt"
     csr_content: "{{ csr.csr }}"
     privatekey_path: "{{ docker_path }}/traefik/ssl/cert.key"
-    provider: selfsigned
+    provider: ownca
+    ownca_path: "/home/{{ username }}/ca/ca.crt"
+    ownca_privatekey_path: "/home/{{ username }}/ca/ca.key"
 
 - name: Change ownership for cert and key
   ansible.builtin.file:
