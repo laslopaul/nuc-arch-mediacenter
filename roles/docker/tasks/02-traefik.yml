@@ -39,7 +39,7 @@
     group: "{{ username }}"
   loop:
     - "{{ docker_path }}/traefik/ssl/cert.key"
-    - "{{ docker_path }}/traefik/ssl/cert.pem"
+    - "{{ docker_path }}/traefik/ssl/cert.crt"
 
 - name: Add traefik config file
   ansible.builtin.copy:
