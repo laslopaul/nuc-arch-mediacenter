@@ -27,7 +27,7 @@
 
 - name: Create self-signed certificate from CSR
   community.crypto.x509_certificate:
-    path: "{{ docker_path }}/traefik/ssl/cert.pem"
+    path: "{{ docker_path }}/traefik/ssl/cert.crt"
     csr_content: "{{ csr.csr }}"
     privatekey_path: "{{ docker_path }}/traefik/ssl/cert.key"
     provider: selfsigned
