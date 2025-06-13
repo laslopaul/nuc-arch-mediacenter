@@ -19,7 +19,7 @@
 - name: Create CSR for self-signed certificate
   community.crypto.openssl_csr_pipe:
     privatekey_path: "{{ docker_path }}/traefik/ssl/cert.key"
-    common_name: "{{ domain }}"
+    common_name: "qb.{{ domain }}"
     subject_alt_name:
       - "DNS:*.{{ domain }}"
       - "DNS:{{ domain }}"
