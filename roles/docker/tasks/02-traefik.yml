@@ -33,6 +33,8 @@
     provider: ownca
     ownca_path: "/home/{{ username }}/ca/ca.crt"
     ownca_privatekey_path: "/home/{{ username }}/ca/ca.key"
+    ownca_not_after: +365d  # valid for one year
+    ownca_not_before: "-1d"  # valid since yesterday
 
 - name: Change ownership for cert and key
   ansible.builtin.file:
