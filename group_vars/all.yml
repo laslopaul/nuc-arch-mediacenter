@@ -2,3 +2,5 @@
 # code: language=ansible
 
 username: kodi
+domain: nuc-server.lan
+zerotier_ip: "172.27.100.100"

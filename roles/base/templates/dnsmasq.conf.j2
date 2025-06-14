@@ -1,0 +1,22 @@
+listen-address={{ zerotier_ip }}
+
+# Never forward plain names (without a dot or domain part)
+domain-needed
+
+# Never forward addresses in the non-routed address spaces
+bogus-priv
+
+# Add local domain
+domain={{ domain.split('.')[1] }}
+
+# Set the IP address of your server
+address=/{{ domain }}/{{ zerotier_ip }}
+address=/.{{ domain }}/{{ zerotier_ip }}
+
+# Alternatively, you can use this format for multiple hosts
+# host-record=nuc-server.lan,192.168.1.100
+# host-record=other-server.lan,192.168.1.101
+
+# Enable logging
+log-queries
+log-facility=/var/log/dnsmasq.log

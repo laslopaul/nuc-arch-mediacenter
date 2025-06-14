@@ -3,8 +3,6 @@
 
 docker_path: "/home/{{ username }}/docker"
 
-domain: nuc-server.lan
-
 images:
   traefik: "traefik:v2.11"
   qbittorrent: "linuxserver/qbittorrent:5.1.0"

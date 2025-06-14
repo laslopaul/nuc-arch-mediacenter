@@ -1,0 +1,22 @@
+---
+# code: language=ansible
+
+- name: Install dnsmasq
+  community.general.pacman:
+    name: dnsmasq
+    state: present
+    update_cache: true
+
+- name: Create dnsmasq config
+  ansible.builtin.template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable dnsmasq service
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: started
+    enabled: true

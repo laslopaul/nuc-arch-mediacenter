@@ -16,3 +16,7 @@
 - name: Configure pipewire
   ansible.builtin.import_tasks: 04-pipewire.yml
   tags: pipewire
+
+- name: Configure dnsmasq
+  ansible.builtin.import_tasks: 05-dnsmasq.yml
+  tags: dnsmasq
