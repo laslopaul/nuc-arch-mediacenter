@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     command:
       - "--configFile=/etc/traefik/traefik.yml"
+    environment:
+      - TZ={{ timezone }}
     ports:
       - "443:443"
     volumes:

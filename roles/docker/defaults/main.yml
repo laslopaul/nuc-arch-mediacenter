@@ -3,6 +3,8 @@
 
 docker_path: "/home/{{ username }}/docker"
 
+timezone: "Europe/Minsk"
+
 images:
   traefik: "traefik:v3.4"
   qbittorrent: "linuxserver/qbittorrent:5.1.0"

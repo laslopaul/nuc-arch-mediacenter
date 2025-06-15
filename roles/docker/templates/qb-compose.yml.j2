@@ -6,6 +6,7 @@ services:
       - PUID=1000
       - PGID=1000
       - WEBUI_PORT=8080
+      - TZ={{ timezone }}
     volumes:
       - {{ docker_path }}/qb/config:/config
       - /home/{{ username }}/Library:/downloads
