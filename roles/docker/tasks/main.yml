@@ -12,3 +12,7 @@
 - name: Install qbittorrent
   ansible.builtin.import_tasks: 03-qbittorrent.yml
   tags: qb
+
+- name: Install Vaultwarden
+  ansible.builtin.import_tasks: 04-vaultwarden.yml
+  tags: vw

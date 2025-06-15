@@ -1,7 +1,7 @@
 ---
 # code: language=ansible
 
-- name: Add folders for Qbittorrent files
+- name: Add folders for Vaultwarden files
   ansible.builtin.file:
     path: "/home/{{ username }}/docker/{{ item }}"
     state: directory
@@ -9,19 +9,19 @@
     group: "{{ username }}"
     mode: '0755'
   loop:
-    - qb
-    - qb/config
+    - vw
+    - vw/data
 
 - name: Create Docker Compose file
   ansible.builtin.template:
-    src: qb-compose.yml.j2
-    dest: "{{ docker_path }}/qb/docker-compose.yml"
+    src: vaultwarden-compose.yml.j2
+    dest: "{{ docker_path }}/vw/docker-compose.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
 
-- name: Launch Qbittorrent service
+- name: Launch Vaultwarden service
   community.docker.docker_compose_v2:
-    project_src: "{{ docker_path }}/qb"
+    project_src: "{{ docker_path }}/vw"
     recreate: auto
     remove_orphans: false
