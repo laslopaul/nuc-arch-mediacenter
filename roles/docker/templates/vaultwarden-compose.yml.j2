@@ -6,6 +6,7 @@ services:
     environment:
       - DOMAIN=https://vw.{{ domain }}
       - TZ={{ timezone }}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
     volumes:
       - {{ docker_path }}/vw/data/:/data/
     networks:
