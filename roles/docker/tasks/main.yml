@@ -16,3 +16,7 @@
 - name: Install Vaultwarden
   ansible.builtin.import_tasks: 04-vaultwarden.yml
   tags: vw
+
+- name: Install Plex
+  ansible.builtin.import_tasks: 05-plex.yml
+  tags: plex

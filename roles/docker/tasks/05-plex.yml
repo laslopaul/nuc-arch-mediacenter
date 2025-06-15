@@ -1,0 +1,27 @@
+---
+# code: language=ansible
+
+- name: Add folders for Plex files
+  ansible.builtin.file:
+    path: "/home/{{ username }}/docker/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+  loop:
+    - plex
+    - plex/config
+
+- name: Create Docker Compose file
+  ansible.builtin.template:
+    src: plex-compose.yml.j2
+    dest: "{{ docker_path }}/vw/docker-compose.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Launch Plex service
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/plex"
+    recreate: auto
+    remove_orphans: false

@@ -1,0 +1,17 @@
+services:
+  plex:
+    image: {{ images['plex'] }}
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ={{ timezone }}
+      - VERSION=docker
+    volumes:
+      - {{ docker_path }}/plex/config:/config
+      - /home/{{ username }}/Library/Shows:/tv
+      - /home/{{ username }}/Library/Movies:/movies
+    devices:
+      - /dev/dri:/dev/dri
+    restart: unless-stopped
