@@ -7,6 +7,12 @@
     state: present
     update_cache: true
 
+- name: Enable dnsmasq service
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: started
+    enabled: true
+
 - name: Create dnsmasq config
   ansible.builtin.template:
     src: dnsmasq.conf.j2
@@ -14,9 +20,4 @@
     owner: root
     group: root
     mode: '0644'
-
-- name: Enable dnsmasq service
-  ansible.builtin.systemd:
-    name: dnsmasq
-    state: started
-    enabled: true
+  notify: Restart dnsmasq
