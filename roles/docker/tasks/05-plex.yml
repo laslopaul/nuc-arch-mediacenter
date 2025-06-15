@@ -15,7 +15,7 @@
 - name: Create Docker Compose file
   ansible.builtin.template:
     src: plex-compose.yml.j2
-    dest: "{{ docker_path }}/vw/docker-compose.yml"
+    dest: "{{ docker_path }}/plex/docker-compose.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
