@@ -11,35 +11,49 @@ LOCALE="ru_RU.UTF-8"
 KEYMAP="us"
 TIMEZONE="Europe/Minsk"
 
+# Change DISK_SETUP to 1 if you want to set up disks from scratch (THIS WILL WIPE YOUR DATA)
+DISK_SETUP=0
+EFI="${DISK}1"
+LVM_PART="${DISK}2"
+EFI_PART_SIZE="1G"
+ROOT_PART_SIZE="100G"
+
 # Network config (change these)
 INTERFACE="enp3s0"
 STATIC_IP="192.168.100.100/24"
 GATEWAY="192.168.100.1"
-DNS="8.8.8.8"
+DNS_1="9.9.9.9"
+DNS_2="149.112.112.112"
+ZEROTIER_NET_ID=
 # ===================================
 
-echo "==> Wiping disk: $DISK"
-sgdisk --zap-all "$DISK"
+disk_setup() {
+    echo "==> Wiping disk: $DISK"
+    sgdisk --zap-all "$DISK"
 
-echo "==> Creating GPT partitions"
-sgdisk -n1:0:+1G -t1:ef00 "$DISK"
-sgdisk -n2:0:0     -t2:8300 "$DISK"
+    echo "==> Creating GPT partitions"
+    sgdisk -n1:0:+"$EFI_PART_SIZE" -t1:ef00 "$DISK"
+    sgdisk -n2:0:0 -t2:8300 "$DISK"
 
-EFI="${DISK}1"
-LVM_PART="${DISK}2"
+    echo "==> Setting up LVM"
+    pvcreate "$LVM_PART"
+    vgcreate "$VGNAME" "$LVM_PART"
+    lvcreate -L "$ROOT_PART_SIZE" "$VGNAME" -n root
+    lvcreate -l 100%FREE "$VGNAME" -n home
+
+    echo "==> Formatting home volume"
+    mkfs.ext4 "/dev/$VGNAME/home"
+}
+
+if [ "$DISK_SETUP" -eq 1 ]; then
+    disk_setup
+fi
 
 echo "==> Formatting EFI system partition"
 mkfs.fat -F32 "$EFI"
 
-echo "==> Setting up LVM"
-pvcreate "$LVM_PART"
-vgcreate "$VGNAME" "$LVM_PART"
-lvcreate -L 100G "$VGNAME" -n root
-lvcreate -l 100%FREE "$VGNAME" -n home
-
-echo "==> Formatting logical volumes"
+echo "==> Formatting root volume"
 mkfs.ext4 "/dev/$VGNAME/root"
-mkfs.ext4 "/dev/$VGNAME/home"
 
 echo "==> Mounting filesystems"
 mount "/dev/$VGNAME/root" /mnt
@@ -49,7 +63,7 @@ mkdir /mnt/boot
 mount "$EFI" /mnt/boot
 
 echo "==> Installing base system"
-pacstrap -K /mnt base linux linux-firmware intel-ucode intel-media-driver lvm2 iwd man-db man-pages grub efibootmgr vim htop mc ansible git python-passlib openssh
+pacstrap -K /mnt base linux linux-firmware intel-ucode intel-media-driver lvm2 iwd man-db man-pages grub efibootmgr vim htop mc ansible git python-passlib openssh zerotier-one
 
 echo "==> Generating fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -88,8 +102,14 @@ Name=$INTERFACE
 [Network]
 Address=$STATIC_IP
 Gateway=$GATEWAY
-DNS=$DNS
+DNS=$DNS_1
+DNS=$DNS_2
 END
+
+echo "==> Configuring Zerotier Network"
+zerotier-cli join $ZEROTIER_NET_ID
+ZEROTIER_DEV_ID=$(zerotier-cli list-networks | tail -n +2 | cut -f3 -d' ')
+echo "Now you should authorize your device id $ZEROTIER_DEV_ID in the Zerotier Central"
 
 echo "==> Configuring initramfs for LVM"
 sed -i 's/block filesystems/block lvm2 filesystems/' /etc/mkinitcpio.conf
