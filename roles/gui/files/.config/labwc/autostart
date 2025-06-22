@@ -5,7 +5,7 @@ pactl set-card-profile ${CARD_ID} output:hdmi-stereo
 wpctl set-volume ${SINK_ID} 1.0
 
 # Launch udiskie
-udiskie --tray &
+udiskie -F &
 sleep 1
 
 # Launch Kodi in workspace 1
