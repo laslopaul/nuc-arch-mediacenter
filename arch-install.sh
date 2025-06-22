@@ -63,7 +63,7 @@ mkdir /mnt/boot
 mount "$EFI" /mnt/boot
 
 echo "==> Installing base system"
-pacstrap -K /mnt base linux linux-firmware intel-ucode intel-media-driver lvm2 iwd man-db man-pages grub efibootmgr vim htop mc ansible git python-passlib openssh zerotier-one
+pacstrap -K /mnt base linux linux-firmware intel-ucode intel-media-driver lvm2 cryptsetup exfatprogs iwd man-db man-pages grub efibootmgr vim htop mc ansible git python-passlib openssh zerotier-one
 
 echo "==> Generating fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
