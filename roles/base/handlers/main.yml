@@ -14,3 +14,8 @@
   ansible.builtin.systemd:
     name: dnsmasq
     state: restarted
+
+- name: Restart polkit
+  ansible.builtin.systemd:
+    name: polkit
+    state: restarted

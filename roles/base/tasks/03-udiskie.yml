@@ -17,6 +17,15 @@
     group: "{{ username }}"
     mode: '0755'
 
+- name: Allow removable drive operations with Polkit
+  ansible.builtin.copy:
+    dest: /etc/polkit-1/rules.d/10-udiskie.rules
+    src: 10-udiskie.rules
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart polkit
+
 - name: Add udiskie config
   ansible.builtin.copy:
     src: udiskie-config.yaml

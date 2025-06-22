@@ -1,7 +1,7 @@
 program_options:
-  notify: true
   automount: true
-  tray: true
-notifications:
-  device_mounted: "{device_presentation} mounted on {mount_path}"
-  device_unmounted: "{device_presentation} unmounted"
+  notify: false
+
+device_config:
+  - is_luks: true
+    automount: false

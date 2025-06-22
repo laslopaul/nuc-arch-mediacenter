@@ -67,13 +67,14 @@
     mode: '0644'
   notify: Reload systemd
 
-- name: "Allow passwordless suspend/shutdown/reboot with Polkit"
+- name: Allow passwordless suspend/shutdown/reboot with Polkit
   ansible.builtin.copy:
     dest: /etc/polkit-1/rules.d/50-i3-power.rules
     src: 50-power.rules
     owner: root
     group: root
     mode: '0644'
+  notify: Restart polkit
 
 - name: Enable colors in terminal for root and normal user
   ansible.builtin.copy:
