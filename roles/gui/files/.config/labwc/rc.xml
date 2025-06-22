@@ -15,19 +15,16 @@
   <windowRules>
     <!-- Kodi in workspace 1 (fullscreen) -->
     <windowRule identifier="Kodi">
-            <fullscreen>yes</fullscreen>
             <action name="SendToDesktop" to="1" follow="yes" wrap="yes" />
     </windowRule>
 
     <!-- Firefox in workspace 2 (fullscreen) -->
     <windowRule identifier="firefox">
-            <fullscreen>yes</fullscreen>
             <action name="SendToDesktop" to="2" follow="no" wrap="yes" />
     </windowRule>
 
     <!-- Alacritty in workspace 3 (fullscreen) -->
     <windowRule identifier="Alacritty">
-            <fullscreen>yes</fullscreen>
             <action name="SendToDesktop" to="3" follow="no" wrap="yes" />
     </windowRule>
   </windowRules>
