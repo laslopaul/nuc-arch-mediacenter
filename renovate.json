@@ -3,9 +3,14 @@
   "extends": [
     "config:recommended"
   ],
-  "docker": {
-    "fileMatch": [
-      "roles/docker/defaults/main.yml"
-    ]
-  }
+  "packageRules": [
+    {
+      "matchCategories": [
+        "docker"
+      ],
+      "managerFilePatterns": [
+        "/roles/docker/defaults/main.yml/"
+      ]
+    }
+  ]
 }
