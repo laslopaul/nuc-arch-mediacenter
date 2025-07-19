@@ -15,3 +15,6 @@ jobs:
         uses: renovatebot/github-action@v43.0.3
         with:
           token: ${{ secrets.RENOVATE_TOKEN }}
+        env:
+          LOG_LEVEL: debug
+          RENOVATE_AUTODISCOVER: "true"
