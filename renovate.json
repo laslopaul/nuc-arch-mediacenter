@@ -5,21 +5,26 @@
   ],
   "customManagers": [
     {
-            "description": "Handle Docker images in Ansible var files",
-            "datasourceTemplate": "docker",
-            "customType": "regex",
-            "fileMatch": [
-                "roles/docker/defaults/main.yml"
-            ],
-            "matchStrings": [
-                "  [a-zA-Z0-9_-]+:\\s+\"(?<depName>[^:\"]+)(?::(?<currentValue>[^\"]+))?\""
-            ],
-            "packageNameTemplate": "{{depName}}"
+      "description": "Handle Docker images in Ansible var files",
+      "datasourceTemplate": "docker",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/roles/docker/defaults/main.yml/"
+      ],
+      "matchStrings": [
+        "  [a-zA-Z0-9_-]+:\\s+\"(?<depName>[^:\"]+)(?::(?<currentValue>[^\"]+))?\""
+      ],
+      "packageNameTemplate": "{{depName}}"
     }
   ],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true
     }
   ]
