@@ -3,14 +3,18 @@
   "extends": [
     "config:recommended"
   ],
-  "packageRules": [
+  "customManagers": [
     {
-      "matchCategories": [
-        "docker"
-      ],
-      "managerFilePatterns": [
-        "/roles/docker/defaults/main.yml/"
-      ]
+            "description": "Handle Docker images in Ansible var files",
+            "datasourceTemplate": "docker",
+            "customType": "regex",
+            "fileMatch": [
+                "roles/docker/defaults/main.yml"
+            ],
+            "matchStrings": [
+                "  [a-zA-Z0-9_-]+:\\s+\"(?<depName>[^:\"]+)(?::(?<currentValue>[^\"]+))?\""
+            ],
+            "packageNameTemplate": "{{depName}}"
     }
   ]
 }
