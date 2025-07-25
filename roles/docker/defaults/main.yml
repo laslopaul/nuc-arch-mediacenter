@@ -1,13 +1,12 @@
 ---
 # code: language=ansible
-# noqa: var-naming[no-role-prefix]
 
 docker_path: "/home/{{ username }}/docker"
 
 timezone: "Europe/Minsk"
 
 images:
-  traefik: "traefik:v3.4"
+  traefik: "traefik:v3.5.0"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.1.2"
   vaultwarden: "vaultwarden/server:1.34.1"
   plex: "lscr.io/linuxserver/plex:1.41.9"

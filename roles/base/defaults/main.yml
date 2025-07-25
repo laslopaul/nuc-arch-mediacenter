@@ -1,6 +1,5 @@
 ---
 # code: language=ansible
-# noqa: var-naming[no-role-prefix]
 
 ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGRNjG2APH9L1DqkEkLaPRQtNJhlePFIKIO+z8Pz7D4o"
 repo_url: "https://github.com/laslopaul/nuc-arch-mediacenter"
