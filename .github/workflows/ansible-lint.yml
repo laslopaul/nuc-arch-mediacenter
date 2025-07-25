@@ -66,6 +66,9 @@ jobs:
         run: |
           pip install ansible ansible-lint
       
+      - name: Debug file list
+        run: ls -R .
+      
       - name: Run ansible-lint
         run: |
           ansible-lint -c .ansible-lint
