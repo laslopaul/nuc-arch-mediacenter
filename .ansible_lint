@@ -1,5 +1,5 @@
 ---
 skip_list:
-  - var-naming[no-role-prefix]
+  - var-naming[role]
   - yaml[line-length]
   - no-jinja-when
