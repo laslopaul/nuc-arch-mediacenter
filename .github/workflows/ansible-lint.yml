@@ -1,0 +1,72 @@
+name: Ansible Lint
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - '**/roles/**'
+      - '**/tasks/**'
+      - '**/handlers/**'
+      - '**/playbooks/**'
+      - '**/group_vars/**'
+      - '**/host_vars/**'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - 'ansible.cfg'
+      - '.ansible-lint'
+      - '.config/ansible-lint.yml'
+
+jobs:
+  changed-files:
+    name: Detect changed files
+    runs-on: ubuntu-latest
+    outputs:
+      any-ansible-changes: ${{ steps.filter.outputs.any_changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            any_changed:
+              - '**/roles/**'
+              - '**/tasks/**'
+              - '**/handlers/**'
+              - '**/playbooks/**'
+              - '**/group_vars/**'
+              - '**/host_vars/**'
+              - '**/*.yml'
+              - '**/*.yaml'
+              - 'ansible.cfg'
+              - '.ansible-lint'
+              - '.config/ansible-lint.yml'
+
+  lint:
+    name: Run ansible-lint
+    needs: changed-files
+    if: needs.changed-files.outputs.any-ansible-changes == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install ansible-lint
+        run: |
+          pip install ansible ansible-lint
+
+      - name: Run ansible-lint
+        run: |
+          ansible-lint
+          

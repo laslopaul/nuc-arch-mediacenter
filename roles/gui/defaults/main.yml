@@ -1,5 +1,6 @@
 ---
 # code: language=ansible
+# noqa: var-naming[no-role-prefix]
 
 # supported variants: i3 and labwc
 desktop: labwc

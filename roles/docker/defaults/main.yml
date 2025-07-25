@@ -1,5 +1,6 @@
 ---
 # code: language=ansible
+# noqa: var-naming[no-role-prefix]
 
 docker_path: "/home/{{ username }}/docker"
 

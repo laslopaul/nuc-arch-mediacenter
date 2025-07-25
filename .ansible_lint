@@ -1,5 +1,6 @@
 ---
+exclude_paths:
+  - .github/workflows
 skip_list:
-  - var-naming[no-role-prefix]
   - yaml[line-length]
   - no-jinja-when
