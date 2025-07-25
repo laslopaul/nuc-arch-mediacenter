@@ -65,3 +65,7 @@ jobs:
       - name: Install ansible-lint
         run: |
           pip install ansible ansible-lint
+      
+      - name: Run ansible-lint
+        run: |
+          ansible-lint 
