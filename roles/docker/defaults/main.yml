@@ -8,5 +8,5 @@ timezone: "Europe/Minsk"
 images:
   traefik: "traefik:v3.5.0"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.1.2"
-  vaultwarden: "vaultwarden/server:1.34.1"
+  vaultwarden: "vaultwarden/server:1.34.2"
   plex: "lscr.io/linuxserver/plex:1.41.9"
