@@ -9,8 +9,8 @@ udiskie -F &
 sleep 1
 
 # Launch Kodi in workspace 1
-kodi &
-sleep 3
+# kodi &
+# sleep 3
 
 # Launch Firefox in workspace 2
 firefox &
