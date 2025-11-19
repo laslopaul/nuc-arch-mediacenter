@@ -23,7 +23,7 @@
 - name: Install apps
   community.general.pacman:
     name:
-      - kodi
+      #- kodi
       - firefox
       - alacritty
       - ttf-hack
