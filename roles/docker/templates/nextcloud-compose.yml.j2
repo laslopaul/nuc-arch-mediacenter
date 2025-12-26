@@ -1,6 +1,6 @@
 services:
   db:
-    image: {{ images['mariadb'] }}
+    image: {{ images['postgres'] }}
     restart: always
     networks:
       - traefik_traefik
@@ -8,9 +8,8 @@ services:
       - TZ={{ timezone }}
     env_file:
       - db.env
-    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - {{ docker_path }}/nextcloud/db:/var/lib/mysql
+      - {{ docker_path }}/nextcloud/db:/var/lib/postgresql
 
   nextcloud:
     image: {{ images['nextcloud'] }}
