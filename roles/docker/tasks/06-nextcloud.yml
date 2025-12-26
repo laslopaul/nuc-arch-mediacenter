@@ -11,7 +11,7 @@
   loop:
     - nextcloud
     - nextcloud/data
-    - nextcloud/config
+    - nextcloud/db
 
 - name: Create Docker Compose file
   ansible.builtin.template:

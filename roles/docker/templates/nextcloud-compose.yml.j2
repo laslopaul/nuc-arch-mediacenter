@@ -1,16 +1,28 @@
 services:
+  db:
+    image: {{ images['mariadb'] }}
+    restart: always
+    networks:
+      - traefik_traefik
+    environment:
+      - TZ={{ timezone }}
+    env_file:
+      - db.env
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - {{ docker_path }}/nextcloud/db:/var/lib/mysql
+
   nextcloud:
     image: {{ images['nextcloud'] }}
     container_name: nextcloud
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ={{ timezone }}
+    env_file:
+      - nc.env
     volumes:
-      - {{ docker_path }}/nextcloud/config:/config
-      - {{ docker_path }}/nextcloud/data:/data
-    ports:
-      - "8443:443"
+      - {{ docker_path }}/nextcloud/data:/var/www/html
+    links:
+      - db
     restart: unless-stopped
     networks:
       - traefik_traefik
@@ -19,9 +31,7 @@ services:
       - "traefik.http.routers.nc.rule=Host(`nc.{{ domain }}`)"
       - "traefik.http.routers.nc.entrypoints=websecure"
       - "traefik.http.routers.nc.tls=true"
-      - "traefik.http.services.nc.loadbalancer.server.port=443"
-      - "traefik.http.services.nc.loadbalancer.server.scheme=https"
-      - "traefik.http.services.nc.loadbalancer.serverstransport=insecureTransport@file"
+      - "traefik.http.services.nc.loadbalancer.server.port=80"
 
 networks:
   traefik_traefik:
