@@ -1,0 +1,28 @@
+services:
+  nextcloud:
+    image: {{ images['nextcloud'] }}
+    container_name: nextcloud
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ={{ timezone }}
+    volumes:
+      - {{ docker_path }}/nextcloud/config:/config
+      - {{ docker_path }}/nextcloud/data:/data
+    ports:
+      - "443:443"
+    restart: unless-stopped
+    networks:
+      - traefik_traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nc.rule=Host(`nc.{{ domain }}`)"
+      - "traefik.http.routers.nc.entrypoints=websecure"
+      - "traefik.http.routers.nc.tls=true"
+      - "traefik.http.services.nc.loadbalancer.server.port=443"
+      - "traefik.http.services.nc.loadbalancer.server.scheme=https"
+      - "traefik.http.services.nc.loadbalancer.serverstransport=insecureTransport@file"
+
+networks:
+  traefik_traefik:
+    external: true

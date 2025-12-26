@@ -1,0 +1,28 @@
+---
+# code: language=ansible
+
+- name: Add folders for Nextcloud files
+  ansible.builtin.file:
+    path: "/home/{{ username }}/docker/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+  loop:
+    - nextcloud
+    - nextcloud/data
+    - nextcloud/config
+
+- name: Create Docker Compose file
+  ansible.builtin.template:
+    src: nextcloud-compose.yml.j2
+    dest: "{{ docker_path }}/nextcloud/docker-compose.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Launch Nextcloud service
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/nextcloud"
+    recreate: auto
+    remove_orphans: false

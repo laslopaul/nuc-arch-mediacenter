@@ -4,3 +4,8 @@ tls:
       defaultCertificate:
         certFile: "/certs/cert.crt"
         keyFile: "/certs/cert.key"
+
+http:
+  serversTransports:
+    insecureTransport:
+      insecureSkipVerify: true

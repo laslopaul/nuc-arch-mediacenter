@@ -20,3 +20,7 @@
 - name: Install Plex
   ansible.builtin.import_tasks: 05-plex.yml
   tags: plex
+
+- name: Install Nextcloud
+  ansible.builtin.import_tasks: 06-nextcloud.yml
+  tags: nextcloud

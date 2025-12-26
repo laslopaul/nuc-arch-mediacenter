@@ -10,3 +10,4 @@ images:
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.1.2"
   vaultwarden: "vaultwarden/server:1.34.3"
   plex: "lscr.io/linuxserver/plex:1.42.2"
+  nextcloud: "lscr.io/linuxserver/nextcloud:32.0.3"
