@@ -34,7 +34,8 @@ services:
       - "traefik.http.routers.nc.entrypoints=websecure"
       - "traefik.http.routers.nc.tls=true"
       - "traefik.http.services.nc.loadbalancer.server.port=80"
-  
+      - "traefik.http.routers.nc.middlewares=hsts@file"
+
   nextcloud_cron:
     image: {{ images['nextcloud'] }}
     container_name: nextcloud_cron
