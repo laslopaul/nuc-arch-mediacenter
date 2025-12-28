@@ -12,17 +12,27 @@ services:
     volumes:
       - {{ docker_path }}/nextcloud/db:/var/lib/postgresql
 
+  redis:
+    image: {{ images['redis'] }}
+    container_name: nextcloud_redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    networks:
+      - traefik_traefik
+
   nextcloud:
     image: {{ images['nextcloud'] }}
     container_name: nextcloud
     environment:
       - TZ={{ timezone }}
+      - REDIS_HOST=redis
     env_file:
       - nc.env
     volumes:
       - {{ docker_path }}/nextcloud/data:/var/www/html
     depends_on:
       - db
+      - redis
     restart: unless-stopped
     extra_hosts:
       - "nc.nuc-server.lan:127.0.0.1"

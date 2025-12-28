@@ -12,3 +12,4 @@ images:
   plex: "lscr.io/linuxserver/plex:1.42.2"
   nextcloud: "nextcloud:32.0.3"
   postgres: "postgres:18.1"
+  redis: "redis:8.4.0-alpine"
