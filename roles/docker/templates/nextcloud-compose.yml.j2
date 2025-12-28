@@ -1,6 +1,7 @@
 services:
   db:
     image: {{ images['postgres'] }}
+    container_name: nextcloud_pgsql
     restart: always
     networks:
       - traefik_traefik
@@ -20,7 +21,7 @@ services:
       - nc.env
     volumes:
       - {{ docker_path }}/nextcloud/data:/var/www/html
-    links:
+    depends_on:
       - db
     restart: unless-stopped
     networks:
@@ -31,6 +32,22 @@ services:
       - "traefik.http.routers.nc.entrypoints=websecure"
       - "traefik.http.routers.nc.tls=true"
       - "traefik.http.services.nc.loadbalancer.server.port=80"
+  
+  nextcloud_cron:
+    image: {{ images['nextcloud'] }}
+    container_name: nextcloud_cron
+    environment:
+      - TZ={{ timezone }}
+    env_file:
+      - nc.env
+    volumes:
+      - {{ docker_path }}/nextcloud/data:/var/www/html
+    entrypoint: /cron.sh
+    depends_on:
+      - nextcloud
+    restart: unless-stopped
+    networks:
+      - traefik_traefik
 
 networks:
   traefik_traefik:
