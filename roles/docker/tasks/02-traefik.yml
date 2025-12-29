@@ -28,7 +28,7 @@
     cert_expire_epoch: >-
       {{
         cert.not_after
-        | to_datetime('%Y-%m-%dT%H:%M:%SZ')
+        | to_datetime('%Y%m%d%H%M%SZ')
         | int
       }}
     now_epoch: "{{ ansible_facts['date_time'].epoch | int }}"
