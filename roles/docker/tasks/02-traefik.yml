@@ -12,6 +12,27 @@
     - traefik
     - traefik/ssl
 
+- name: Check if the cert file exists
+  ansible.builtin.stat:
+    path: "{{ docker_path }}/traefik/ssl/cert.crt"
+  register: fcrt
+
+- name: Get cert expiration
+  community.crypto.x509_certificate_info:
+    path: "{{ docker_path }}/traefik/ssl/cert.crt"
+  register: cert
+  when: fcrt.stat.exists
+
+- name: Roate cert if expires in < 30 days
+  ansible.builtin.file:
+    path: "{{ docker_path }}/traefik/ssl/{{ item  }}"
+    state: absent
+  loop:
+    - cert.crt
+    - cert.key
+  when: cert.not_after | to_datetime('%Y%m%d%H%M%SZ') <
+        (ansible_date_time.iso8601 | to_datetime + timedelta(days=30))
+
 - name: Create private key (RSA, 4096 bits)
   community.crypto.openssl_privatekey:
     path: "{{ docker_path }}/traefik/ssl/cert.key"
