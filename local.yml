@@ -12,6 +12,10 @@
       role: gui
       tags: gui
 
+    - name: Install TLS certificates for Traefik
+      role: traefik_tls
+      tags: traefik_tls
+
     - name: Install Docker and services
       role: docker
       tags: docker

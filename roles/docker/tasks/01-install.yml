@@ -16,14 +16,6 @@
     groups: docker
     append: true
 
-- name: Add folder for Docker files
-  ansible.builtin.file:
-    path: "{{ docker_path }}"
-    state: directory
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-
 - name: Enable Docker service
   ansible.builtin.systemd:
     name: docker

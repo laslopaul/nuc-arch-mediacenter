@@ -1,79 +1,10 @@
 ---
 # code: language=ansible
 
-- name: Add folders for Traefik files
-  ansible.builtin.file:
-    path: "/home/{{ username }}/docker/{{ item }}"
-    state: directory
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
-  loop:
-    - traefik
-    - traefik/ssl
-
-- name: Check if the cert file exists
-  ansible.builtin.stat:
-    path: "{{ docker_path }}/traefik/ssl/cert.crt"
-  register: fcrt
-
-- name: Get cert expiration
-  community.crypto.x509_certificate_info:
-    path: "{{ docker_path }}/traefik/ssl/cert.crt"
-  register: cert
-  when: fcrt.stat.exists
-
-- name: Rotate cert if expires in < 30 days
-  vars:
-    cert_expire_epoch: "{{ (cert.not_after | to_datetime('%Y%m%d%H%M%SZ')).strftime('%s') | int }}"
-    now_epoch: "{{ ansible_facts['date_time'].epoch | int }}"
-  ansible.builtin.file:
-    path: "{{ docker_path }}/traefik/ssl/{{ item }}"
-    state: absent
-  loop:
-    - cert.crt
-    - cert.key
-  when: (cert_expire_epoch - now_epoch) < 2592000
-
-- name: Create private key (RSA, 4096 bits)
-  community.crypto.openssl_privatekey:
-    path: "{{ docker_path }}/traefik/ssl/cert.key"
-
-- name: Create CSR for self-signed certificate
-  community.crypto.openssl_csr_pipe:
-    privatekey_path: "{{ docker_path }}/traefik/ssl/cert.key"
-    common_name: "*.{{ domain }}"
-    subject_alt_name:
-      - "DNS:*.{{ domain }}"
-      - "DNS:{{ domain }}"
-  register: csr
-
-- name: Create self-signed certificate from CSR
-  community.crypto.x509_certificate:
-    path: "{{ docker_path }}/traefik/ssl/cert.crt"
-    csr_content: "{{ csr.csr }}"
-    privatekey_path: "{{ docker_path }}/traefik/ssl/cert.key"
-    provider: ownca
-    ownca_path: "/home/{{ username }}/ca/ca.crt"
-    ownca_privatekey_path: "/home/{{ username }}/ca/ca.key"
-    ownca_not_after: +365d  # valid for one year
-    ownca_not_before: "-1d"  # valid since yesterday
-
-- name: Change ownership for cert and key
-  ansible.builtin.file:
-    path: "{{ item }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-  loop:
-    - "{{ docker_path }}/traefik/ssl/cert.key"
-    - "{{ docker_path }}/traefik/ssl/cert.crt"
-
-- name: Add traefik config file
+- name: Copy Traefik static config
   ansible.builtin.copy:
-    src: traefik/
-    dest: "{{ docker_path }}/traefik"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    src: traefik/traefik.yml
+    dest: "{{ docker_path }}/traefik/traefik.yml"
     mode: '0644'
 
 - name: Create Docker Compose file
@@ -89,3 +20,5 @@
     project_src: "{{ docker_path }}/traefik"
     recreate: auto
     remove_orphans: false
+    pull: missing
+    state: present

@@ -1,0 +1,8 @@
+---
+# code: language=ansible
+
+- name: Restart traefik
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/traefik"
+    state: restarted
+  when: traefik_compose.stat.exists
