@@ -9,7 +9,12 @@ Ansible configuration for Intel NUC mediacenter running on Arch Linux.
 3. Zerotier virtual LAN + dnsmasq DNS server
 4. Kodi
 5. Firefox
-6. Docker applications (TBD)
+6. Docker applications:
+    - Traefik
+    - Qbittorrent
+    - Plex
+    - Vaultwarden
+    - Nextcloud
 
 ## Install base system
 
@@ -17,6 +22,22 @@ Boot from Arch Linux installation medium and run `arch-install.sh` script from t
 
 ```bash
 ROOT_PASSWORD="mypassword" ZEROTIER_NET_ID="8056c2e21c000001" bash arch-install.sh
+```
+
+## Create CA certificate with OpenSSL
+
+Log in as `kodi`, create `ca` folder in its home directory, copy `ca.cnf` from the repo root to this folder and run:
+
+```bash
+cd ca
+openssl genrsa -out ca.key 4096
+
+openssl req -x509 -new -nodes \
+  -key ca.key \
+  -sha256 \
+  -days 3650 \
+  -out ca.crt \
+  -config ca.cnf
 ```
 
 ## Apply configuration
