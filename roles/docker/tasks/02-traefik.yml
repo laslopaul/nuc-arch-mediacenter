@@ -25,12 +25,7 @@
 
 - name: Roate cert if expires in < 30 days
   vars:
-    cert_expire_epoch: >-
-      {{
-        cert.not_after
-        | (to_datetime('%Y%m%d%H%M%SZ')).strftime('%s')
-        | int
-      }}
+    cert_expire_epoch: "{{ (cert.not_after | to_datetime).strftime('%s') | int }}"
     now_epoch: "{{ ansible_facts['date_time'].epoch | int }}"
   ansible.builtin.file:
     path: "{{ docker_path }}/traefik/ssl/{{ item }}"
