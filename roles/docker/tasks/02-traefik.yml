@@ -28,7 +28,7 @@
     cert_expire_epoch: >-
       {{
         cert.not_after
-        | to_datetime('%Y%m%d%H%M%SZ')
+        | (to_datetime('%Y%m%d%H%M%SZ')).strftime('%s')
         | int
       }}
     now_epoch: "{{ ansible_facts['date_time'].epoch | int }}"
@@ -38,7 +38,7 @@
   loop:
     - cert.crt
     - cert.key
-  when: cert_expire_epoch - now_epoch < 2592000
+  when: (cert_expire_epoch - now_epoch) < 2592000
 
 - name: Create private key (RSA, 4096 bits)
   community.crypto.openssl_privatekey:
