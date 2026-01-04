@@ -1,0 +1,11 @@
+[Unit]
+Description=udiskie - automount removable drives (headless)
+After=dbus.service
+
+[Service]
+ExecStart=/usr/bin/udiskie --no-tray --no-notify
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

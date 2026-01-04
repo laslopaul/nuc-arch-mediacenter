@@ -34,10 +34,28 @@
     group: "{{ username }}"
     mode: '0644'
 
+- name: Add udiskie.service for user
+  ansible.builtin.copy:
+    src: udiskie.service
+    dest: "/home/{{ username }}/.config/systemd/user/udiskie.service"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
 - name: Enable udisks2 service
   ansible.builtin.systemd:
     name: udisks2
     enabled: true
+    state: started
+
+- name: Enable udiskie service for user
+  become: true
+  become_user: "{{ username }}"
+  ansible.builtin.systemd:
+    scope: user
+    daemon_reload: true
+    enabled: true
+    name: udiskie
     state: started
 
 - name: Enable fstrim
