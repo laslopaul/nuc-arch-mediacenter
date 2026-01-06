@@ -1,0 +1,27 @@
+---
+# code: language=ansible
+
+- name: Add folders for step-ca files
+  ansible.builtin.file:
+    path: "/home/{{ username }}/docker/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+  loop:
+    - step
+    - step/data
+
+- name: Create Docker Compose file
+  ansible.builtin.template:
+    src: step-compose.yml.j2
+    dest: "{{ docker_path }}/step/docker-compose.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+
+- name: Launch step-ca service
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/step"
+    recreate: auto
+    remove_orphans: false

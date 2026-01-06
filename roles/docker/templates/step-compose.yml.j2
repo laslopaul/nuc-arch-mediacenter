@@ -1,0 +1,12 @@
+services:
+  step-ca:
+    image: {{ images['step-ca'] }}
+    container_name: step-ca
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - TZ={{ timezone }}
+    ports:
+      - "9000:9000"
+    volumes:
+      - "{{ docker_path }}/step/data:/home/step"

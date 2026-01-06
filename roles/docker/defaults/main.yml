@@ -13,3 +13,4 @@ images:
   nextcloud: "nextcloud:32.0.3"
   postgres: "postgres:18.1"
   redis: "redis:8.4.0-alpine"
+  step-ca: "smallstep/step-ca:0.29.0"

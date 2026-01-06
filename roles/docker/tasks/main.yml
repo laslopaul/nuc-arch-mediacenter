@@ -2,25 +2,29 @@
 # code: language=ansible
 
 - name: Install Docker
-  ansible.builtin.import_tasks: 01-install.yml
+  ansible.builtin.import_tasks: install.yml
   tags: docker-install
 
+- name: Install Step CA
+  ansible.builtin.import_tasks: step-ca.yml
+  tags: step-ca
+
 - name: Install Traefik
-  ansible.builtin.import_tasks: 02-traefik.yml
+  ansible.builtin.import_tasks: traefik.yml
   tags: traefik
 
 - name: Install qbittorrent
-  ansible.builtin.import_tasks: 03-qbittorrent.yml
+  ansible.builtin.import_tasks: qbittorrent.yml
   tags: qb
 
 - name: Install Vaultwarden
-  ansible.builtin.import_tasks: 04-vaultwarden.yml
+  ansible.builtin.import_tasks: vaultwarden.yml
   tags: vw
 
 - name: Install Plex
-  ansible.builtin.import_tasks: 05-plex.yml
+  ansible.builtin.import_tasks: plex.yml
   tags: plex
 
 - name: Install Nextcloud
-  ansible.builtin.import_tasks: 06-nextcloud.yml
+  ansible.builtin.import_tasks: nextcloud.yml
   tags: nextcloud
