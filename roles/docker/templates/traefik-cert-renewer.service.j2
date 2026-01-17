@@ -8,7 +8,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User={{ username }}
-ExecStart=/usr/bin/step ca renew --daemon --exec "docker restart traefik" {{ docker_path }}/traefik/ssl/cert.crt {{ docker_path }}/traefik/ssl/cert.key
+ExecStart=/usr/local/bin/step ca renew --daemon --exec "docker restart traefik" {{ docker_path }}/traefik/ssl/cert.crt {{ docker_path }}/traefik/ssl/cert.key
 
 [Install]
 WantedBy=multi-user.target
