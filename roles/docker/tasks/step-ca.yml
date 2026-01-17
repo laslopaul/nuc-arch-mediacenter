@@ -25,3 +25,24 @@
     project_src: "{{ docker_path }}/step"
     recreate: auto
     remove_orphans: false
+
+- name: Install step-cli
+  community.general.pacman:
+    name:
+      - step-cli
+    state: present
+    update_cache: true
+
+- name: Create symlink to step
+  ansible.builtin.file:
+    src: /usr/bin/step-cli
+    dest: /usr/local/bin/step
+    state: link
+
+- name: Install CA to the system trust store
+  vars:
+    fingerprint: cb8e704102547f8a85f656a6419a5c7c3ae93a7ef5eda3bb1504f6a31acd8a9c
+  ansible.builtin.command:
+    cmd: >
+      step ca bootstrap --ca-url https://{{ domain }}:9000 --fingerprint {{ fingerprint }} --install
+    creates: "/home/{{ username }}/.step//certs/root_ca.crt"

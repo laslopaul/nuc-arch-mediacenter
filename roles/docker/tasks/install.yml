@@ -1,6 +1,14 @@
 ---
 # code: language=ansible
 
+- name: Add folder for Docker files
+  ansible.builtin.file:
+    path: "{{ docker_path }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+
 - name: Install Docker
   community.general.pacman:
     name:

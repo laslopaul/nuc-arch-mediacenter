@@ -5,3 +5,4 @@ skip_list:
   - yaml[line-length]
   - var-naming[no-role-prefix]
   - no-jinja-when
+  - jinja[spacing]

@@ -1,6 +1,43 @@
 ---
 # code: language=ansible
 
+- name: Add folders for Traefik files
+  ansible.builtin.file:
+    path: "{{ docker_path }}/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+  loop:
+    - traefik
+    - traefik/ssl
+
+- name: Generate TLS cert for traefik
+  ansible.builtin.command:
+    chdir: "{{ docker_path }}/traefik/ssl"
+    cmd: >
+      step ca certificate "*.{{ domain }}" cert.crt cert.key --password-file=/home/{{ username }}/pki/admin.txt --provisioner admin
+    creates: "{{ item  }}"
+  loop:
+    - "{{ docker_path }}/traefik/ssl/cert.crt"
+    - "{{ docker_path }}/traefik/ssl/cert.key"
+
+- name: Copy traefik-cert-renewer.service to systemd folder
+  ansible.builtin.template:
+    src: traefik-cert-renewer.service.j2
+    dest: /etc/systemd/system/traefik-cert-renewer.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable traefik-cert-renewer.service
+  ansible.builtin.systemd:
+    unit: traefik-cert-renewer.service
+    daemon_reload: true
+    state: started
+    enabled: true
+
+
 - name: Copy Traefik static config
   ansible.builtin.copy:
     src: traefik/traefik.yml

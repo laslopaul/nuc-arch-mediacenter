@@ -1,4 +1,0 @@
----
-# code: language=ansible
-
-docker_path: "/home/{{ username }}/docker"
