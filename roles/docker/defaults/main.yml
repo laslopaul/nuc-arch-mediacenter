@@ -9,7 +9,7 @@ images:
   traefik: "traefik:v3.6.7"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.1.4"
   vaultwarden: "vaultwarden/server:1.35.2"
-  plex: "lscr.io/linuxserver/plex:1.42.2"
+  plex: "lscr.io/linuxserver/plex:1.43.0"
   nextcloud: "nextcloud:32.0.5"
   postgres: "postgres:18.1"
   redis: "redis:8.4.0-alpine"
