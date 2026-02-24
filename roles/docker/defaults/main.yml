@@ -12,5 +12,5 @@ images:
   plex: "lscr.io/linuxserver/plex:1.43.0"
   nextcloud: "nextcloud:32.0.6"
   postgres: "postgres:18.2"
-  redis: "redis:8.6.0-alpine"
+  redis: "redis:8.6.1-alpine"
   step-ca: "smallstep/step-ca:0.29.0"
