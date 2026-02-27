@@ -24,22 +24,6 @@ Boot from Arch Linux installation medium and run `arch-install.sh` script from t
 ROOT_PASSWORD="mypassword" ZEROTIER_NET_ID="8056c2e21c000001" bash arch-install.sh
 ```
 
-## Create CA certificate with OpenSSL
-
-Log in as `kodi`, create `ca` folder in its home directory, copy `ca.cnf` from the repo root to this folder and run:
-
-```bash
-cd ca
-openssl genrsa -out ca.key 4096
-
-openssl req -x509 -new -nodes \
-  -key ca.key \
-  -sha256 \
-  -days 3650 \
-  -out ca.crt \
-  -config ca.cnf
-```
-
 ## Apply configuration
 
 After booting to the base system, pass the password for `kodi` user in `KODI_PASSWORD` env variable, and initialize `ansible-pull`:
