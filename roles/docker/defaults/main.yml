@@ -10,7 +10,7 @@ images:
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.1.4"
   vaultwarden: "vaultwarden/server:1.35.8"
   plex: "lscr.io/linuxserver/plex:1.43.1"
-  nextcloud: "nextcloud:32.0.8"
+  nextcloud: "nextcloud:33.0.3"
   postgres: "postgres:18.3"
   redis: "redis:8.6.2-alpine"
   step-ca: "smallstep/step-ca:0.30.2"
