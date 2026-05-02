@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Docker image cleanup weekly
+Requires=docker-cleanup.service
+
+[Timer]
+OnCalendar=Sun *-*-* 03:00:00
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

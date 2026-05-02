@@ -1,0 +1,12 @@
+[Unit]
+Description=Remove unused Docker images
+Documentation=https://docs.docker.com/engine/reference/commandline/image_prune/
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/docker_cleanup.sh -a -f
+StandardOutput=journal
+StandardError=journal
+User=root
