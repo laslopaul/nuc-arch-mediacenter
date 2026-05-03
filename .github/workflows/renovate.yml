@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Run Renovate Bot
-        uses: renovatebot/github-action@v43.0.3
+        uses: renovatebot/github-action@v46
         with:
           token: ${{ secrets.RENOVATE_TOKEN }}
         env:
-          LOG_LEVEL: debug
+          LOG_LEVEL: info
           RENOVATE_REPOSITORIES: "['laslopaul/nuc-arch-mediacenter']"
