@@ -6,7 +6,7 @@ docker_path: "/home/{{ username }}/docker"
 timezone: "Europe/Minsk"
 
 images:
-  traefik: "traefik:v3.7.6"
+  traefik: "traefik:v3.7.7"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.2.3"
   vaultwarden: "vaultwarden/server:1.36.0"
   plex: "lscr.io/linuxserver/plex:1.43.2"
