@@ -8,7 +8,7 @@ timezone: "Europe/Minsk"
 images:
   traefik: "traefik:v3.7.11"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.2.3"
-  vaultwarden: "vaultwarden/server:1.37.1"
+  vaultwarden: "vaultwarden/server:1.37.2"
   plex: "lscr.io/linuxserver/plex:1.43.3"
   nextcloud: "nextcloud:33.0.8"
   postgres: "postgres:18.6"
