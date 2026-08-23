@@ -1,0 +1,28 @@
+---
+# code: language=ansible
+
+- name: Add folders for Immich files
+  ansible.builtin.file:
+    path: "/home/{{ username }}/docker/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0755"
+  loop:
+    - immich
+    - immich/data
+    - immich/postgres
+
+- name: Create Docker Compose file
+  ansible.builtin.template:
+    src: immich-compose.yml.j2
+    dest: "{{ docker_path }}/immich/docker-compose.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0644"
+
+- name: Launch Immich service
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/immich"
+    recreate: auto
+    remove_orphans: false
