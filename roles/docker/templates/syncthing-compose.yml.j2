@@ -1,0 +1,30 @@
+---
+services:
+  syncthing:
+    image: {{ images['syncthing'] }}
+    container_name: syncthing
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ={{ timezone }}
+    volumes:
+      - {{ docker_path }}/syncthing/config:/config
+      - {{ docker_path }}/syncthing/data/share1:/data1
+    ports:
+      - 8384:8384
+      - 22000:22000/tcp
+      - 22000:22000/udp
+      - 21027:21027/udp
+    restart: unless-stopped
+    networks:
+      - traefik_traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.syncthing.rule=Host(`sync.{{ domain }}`)"
+      - "traefik.http.routers.syncthing.entrypoints=websecure"
+      - "traefik.http.routers.syncthing.tls=true"
+      - "traefik.http.services.syncthing.loadbalancer.server.port=8384"
+
+networks:
+  traefik_traefik:
+    external: true

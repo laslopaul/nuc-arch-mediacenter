@@ -1,0 +1,29 @@
+---
+# code: language=ansible
+
+- name: Add folders for Syncthing files
+  ansible.builtin.file:
+    path: "/home/{{ username }}/docker/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0755"
+  loop:
+    - syncthing
+    - syncthing/config
+    - syncthing/data
+    - syncthing/data/share1
+
+- name: Create Docker Compose file
+  ansible.builtin.template:
+    src: syncthing-compose.yml.j2
+    dest: "{{ docker_path }}/syncthing/docker-compose.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0644"
+
+- name: Launch Syncthing service
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_path }}/syncthing"
+    recreate: auto
+    remove_orphans: false

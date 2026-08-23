@@ -32,3 +32,7 @@
 - name: Install Immich
   ansible.builtin.import_tasks: immich.yml
   tags: immich
+
+- name: Install Syncthing
+  ansible.builtin.import_tasks: syncthing.yml
+  tags: syncthing
