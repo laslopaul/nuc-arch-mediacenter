@@ -25,10 +25,6 @@
   ansible.builtin.import_tasks: plex.yml
   tags: plex
 
-- name: Install Nextcloud
-  ansible.builtin.import_tasks: nextcloud.yml
-  tags: nextcloud
-
 - name: Install Immich
   ansible.builtin.import_tasks: immich.yml
   tags: immich
