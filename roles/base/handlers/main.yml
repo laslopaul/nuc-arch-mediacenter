@@ -19,3 +19,8 @@
   ansible.builtin.systemd:
     name: polkit
     state: restarted
+
+- name: Refresh pacman mirrorlist
+  ansible.builtin.systemd:
+    name: reflector.service
+    state: restarted

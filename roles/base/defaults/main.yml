@@ -3,3 +3,30 @@
 
 ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGRNjG2APH9L1DqkEkLaPRQtNJhlePFIKIO+z8Pz7D4o"
 repo_url: "https://github.com/laslopaul/nuc-arch-mediacenter"
+
+# reflector: pacman mirrorlist refresh
+reflector_protocol: https
+reflector_countries:
+  - BY
+  - LT
+  - LV
+  - PL
+  - UA
+  - EE
+  - FI
+  - SE
+  - DE
+  - CZ
+  - AT
+  - NL
+# Only mirrors synced within this many hours, and fully synced ones only:
+# a partially synced mirror (e.g. cdnmirror.com at 33%) is a source of
+# "could not resolve host" / 404 noise on every transaction.
+reflector_age: 12
+reflector_completion_percent: 100
+# Rate the 30 most recently synced mirrors, keep the 12 fastest.
+reflector_latest: 30
+reflector_sort: rate
+reflector_number: 12
+reflector_connection_timeout: 5
+reflector_download_timeout: 5

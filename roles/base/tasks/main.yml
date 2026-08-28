@@ -20,3 +20,7 @@
 - name: Configure dnsmasq
   ansible.builtin.import_tasks: 05-dnsmasq.yml
   tags: dnsmasq
+
+- name: Configure reflector
+  ansible.builtin.import_tasks: 06-reflector.yml
+  tags: reflector

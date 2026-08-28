@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+# Options for reflector.service, run weekly by reflector.timer.
+
+--save /etc/pacman.d/mirrorlist
+--protocol {{ reflector_protocol }}
+--country {{ reflector_countries | join(',') }}
+--age {{ reflector_age }}
+--completion-percent {{ reflector_completion_percent }}
+--latest {{ reflector_latest }}
+--sort {{ reflector_sort }}
+--number {{ reflector_number }}
+--connection-timeout {{ reflector_connection_timeout }}
+--download-timeout {{ reflector_download_timeout }}
