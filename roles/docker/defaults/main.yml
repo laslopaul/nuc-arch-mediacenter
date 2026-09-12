@@ -9,6 +9,6 @@ images:
   traefik: "traefik:v3.7.13"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.2.3"
   vaultwarden: "vaultwarden/server:1.37.2"
-  plex: "lscr.io/linuxserver/plex:1.43.3"
+  plex: "lscr.io/linuxserver/plex:1.43.4"
   step-ca: "smallstep/step-ca:0.30.2"
   syncthing: "lscr.io/linuxserver/syncthing:2.1.3"
