@@ -11,4 +11,4 @@ images:
   vaultwarden: "vaultwarden/server:1.37.2"
   plex: "lscr.io/linuxserver/plex:1.43.4"
   step-ca: "smallstep/step-ca:0.30.2"
-  syncthing: "lscr.io/linuxserver/syncthing:2.1.3"
+  syncthing: "lscr.io/linuxserver/syncthing:2.1.5"
