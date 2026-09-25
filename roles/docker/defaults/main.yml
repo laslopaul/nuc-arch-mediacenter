@@ -12,3 +12,5 @@ images:
   plex: "lscr.io/linuxserver/plex:1.43.4"
   step-ca: "smallstep/step-ca:0.30.2"
   syncthing: "lscr.io/linuxserver/syncthing:2.1.5"
+  immich-server: "ghcr.io/immich-app/immich-server:v3.2.2"
+  immich-ml: "ghcr.io/immich-app/immich-machine-learning:v3.2.2"
