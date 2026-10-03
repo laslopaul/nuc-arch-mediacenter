@@ -2,12 +2,12 @@
 # code: language=ansible
 
 # supported variants: i3, labwc and none (no desktop).
-# The desktop not selected here gets its config removed.
+# The desktop not selected here gets removed (see purge options below).
 desktop: labwc
 
-# Apps to install & configure. An app left out of the list gets its
-# config removed. To remove the GUI completely, set desktop to none,
-# empty this list and enable the purge options below.
+# Apps to install & configure. An app left out of the list gets removed
+# (see purge options below). To remove the GUI completely, set desktop
+# to none and empty this list.
 gui_components:
   - kodi
   - firefox
