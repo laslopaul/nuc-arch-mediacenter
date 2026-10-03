@@ -1,0 +1,54 @@
+---
+# code: language=ansible
+
+- name: Check for udiskie.service of user
+  ansible.builtin.stat:
+    path: "/home/{{ username }}/.config/systemd/user/udiskie.service"
+  register: udiskie_unit
+
+- name: Disable udiskie service for user
+  become: true
+  become_user: "{{ username }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
+  ansible.builtin.systemd:
+    scope: user
+    enabled: false
+    name: udiskie
+    state: stopped
+  when: udiskie_unit.stat.exists
+
+- name: Remove udiskie config and user service
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/home/{{ username }}/.config/systemd/user/udiskie.service"
+    - "/home/{{ username }}/.config/udiskie"
+
+- name: Reload systemd for user
+  become: true
+  become_user: "{{ username }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
+  ansible.builtin.systemd:
+    scope: user
+    daemon_reload: true
+  when: udiskie_unit.stat.exists
+
+- name: Remove Polkit rule for removable drive operations
+  ansible.builtin.file:
+    path: /etc/polkit-1/rules.d/10-udiskie.rules
+    state: absent
+  notify: Restart polkit
+
+- name: Uninstall udiskie packages not required by others
+  ansible.builtin.shell: |
+    for pkg in udiskie udisks2; do
+      if pacman -Qqt "$pkg" >/dev/null 2>&1; then
+        pacman -R --noconfirm "$pkg" && echo "removed $pkg"
+      fi
+    done
+  register: udiskie_purge
+  changed_when: "'removed' in udiskie_purge.stdout"
+  when: base_purge_packages | bool

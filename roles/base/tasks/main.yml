@@ -11,16 +11,40 @@
 
 - name: Configure udiskie
   ansible.builtin.import_tasks: 03-udiskie.yml
+  when: "'udiskie' in base_components"
+  tags: udiskie
+
+- name: Remove udiskie
+  ansible.builtin.import_tasks: 03-udiskie_remove.yml
+  when: "'udiskie' not in base_components"
   tags: udiskie
 
 - name: Configure pipewire
   ansible.builtin.import_tasks: 04-pipewire.yml
+  when: "'pipewire' in base_components"
+  tags: pipewire
+
+- name: Remove pipewire
+  ansible.builtin.import_tasks: 04-pipewire_remove.yml
+  when: "'pipewire' not in base_components"
   tags: pipewire
 
 - name: Configure dnsmasq
   ansible.builtin.import_tasks: 05-dnsmasq.yml
+  when: "'dnsmasq' in base_components"
+  tags: dnsmasq
+
+- name: Remove dnsmasq
+  ansible.builtin.import_tasks: 05-dnsmasq_remove.yml
+  when: "'dnsmasq' not in base_components"
   tags: dnsmasq
 
 - name: Configure reflector
   ansible.builtin.import_tasks: 06-reflector.yml
+  when: "'reflector' in base_components"
+  tags: reflector
+
+- name: Remove reflector
+  ansible.builtin.import_tasks: 06-reflector_remove.yml
+  when: "'reflector' not in base_components"
   tags: reflector

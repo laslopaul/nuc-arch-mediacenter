@@ -4,6 +4,17 @@
 ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGRNjG2APH9L1DqkEkLaPRQtNJhlePFIKIO+z8Pz7D4o"
 repo_url: "https://github.com/laslopaul/nuc-arch-mediacenter"
 
+# Optional components to install & configure. A component left out of the
+# list gets its services stopped & disabled and its config removed.
+base_components:
+  - udiskie
+  - pipewire
+  - dnsmasq
+  - reflector
+# Also uninstall packages of components left out of base_components.
+# Packages still required by something else are kept.
+base_purge_packages: true
+
 # reflector: pacman mirrorlist refresh
 reflector_protocol: https
 reflector_countries:

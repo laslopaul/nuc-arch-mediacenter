@@ -1,0 +1,26 @@
+---
+# code: language=ansible
+
+- name: Gather installed packages
+  ansible.builtin.package_facts:
+
+- name: Disable reflector timer
+  ansible.builtin.systemd:
+    name: reflector.timer
+    state: stopped
+    enabled: false
+  when: "'reflector' in ansible_facts.packages"
+
+- name: Remove reflector config
+  ansible.builtin.file:
+    path: /etc/xdg/reflector/reflector.conf
+    state: absent
+
+- name: Uninstall reflector if not required by others
+  ansible.builtin.shell: |
+    if pacman -Qqt reflector >/dev/null 2>&1; then
+      pacman -R --noconfirm reflector && echo "removed reflector"
+    fi
+  register: reflector_purge
+  changed_when: "'removed' in reflector_purge.stdout"
+  when: base_purge_packages | bool

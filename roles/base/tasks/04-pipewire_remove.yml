@@ -1,0 +1,41 @@
+---
+# code: language=ansible
+
+- name: Gather installed packages
+  ansible.builtin.package_facts:
+
+- name: Disable PipeWire services for user
+  become: true
+  become_user: "{{ username }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
+  ansible.builtin.systemd:
+    scope: user
+    enabled: false
+    name: "{{ item.unit }}"
+    state: stopped
+  loop:
+    - { unit: 'wireplumber.service', pkg: 'wireplumber' }
+    - { unit: 'pipewire-pulse.socket', pkg: 'pipewire-pulse' }
+    - { unit: 'pipewire-pulse.service', pkg: 'pipewire-pulse' }
+    - { unit: 'pipewire.socket', pkg: 'pipewire' }
+    - { unit: 'pipewire.service', pkg: 'pipewire' }
+  when: item.pkg in ansible_facts.packages
+
+- name: Disable rtkit daemon
+  ansible.builtin.systemd:
+    name: rtkit-daemon
+    state: stopped
+    enabled: false
+  when: "'rtkit' in ansible_facts.packages"
+
+- name: Uninstall PipeWire packages not required by others
+  ansible.builtin.shell: |
+    for pkg in wireplumber pipewire-pulse pipewire-alsa pipewire alsa-utils rtkit; do
+      if pacman -Qqt "$pkg" >/dev/null 2>&1; then
+        pacman -R --noconfirm "$pkg" && echo "removed $pkg"
+      fi
+    done
+  register: pipewire_purge
+  changed_when: "'removed' in pipewire_purge.stdout"
+  when: base_purge_packages | bool
