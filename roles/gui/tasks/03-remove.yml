@@ -1,0 +1,41 @@
+---
+# code: language=ansible
+
+- name: Find unselected GUI components
+  ansible.builtin.set_fact:
+    gui_removed: "{{ gui_packages | list | difference(gui_selected) }}"
+
+- name: Remove config of unselected GUI components
+  ansible.builtin.file:
+    path: "/home/{{ username }}/{{ item }}"
+    state: absent
+  loop: "{{ gui_removed | map('extract', gui_configs) | select('defined') | flatten }}"
+
+- name: Remove user data of unselected apps
+  ansible.builtin.file:
+    path: "/home/{{ username }}/{{ item }}"
+    state: absent
+  loop: "{{ gui_removed | map('extract', gui_userdata) | select('defined') | flatten }}"
+  when: gui_purge_userdata | bool
+
+- name: Uninstall packages of unselected GUI components not required by others
+  vars:
+    gui_kept_packages: "{{ gui_selected | map('extract', gui_packages) | flatten | unique }}"
+    gui_removed_packages: "{{ gui_removed | map('extract', gui_packages) | flatten | unique | difference(gui_kept_packages) }}"
+  # Repeat until nothing changes: removing one package may leave another
+  # one no longer required.
+  ansible.builtin.shell: |
+    progress=1
+    while [ "$progress" = 1 ]; do
+      progress=0
+      for pkg in {{ gui_removed_packages | map('quote') | join(' ') }}; do
+        if pacman -Qqt "$pkg" >/dev/null 2>&1; then
+          pacman -R --noconfirm "$pkg" && echo "removed $pkg" && progress=1
+        fi
+      done
+    done
+  register: gui_purge
+  changed_when: "'removed' in gui_purge.stdout"
+  when:
+    - gui_purge_packages | bool
+    - gui_removed_packages | length > 0

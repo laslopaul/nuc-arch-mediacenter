@@ -1,6 +1,19 @@
 ---
 # code: language=ansible
 
+- name: Select GUI components
+  ansible.builtin.set_fact:
+    gui_selected: "{{ ([desktop] if desktop != 'none' else []) + gui_components }}"
+  tags: always
+
+- name: Validate GUI components
+  ansible.builtin.assert:
+    that:
+      - desktop in ['i3', 'labwc', 'none']
+      - gui_components | difference(['kodi', 'firefox', 'alacritty']) | length == 0
+    fail_msg: "Unsupported desktop '{{ desktop }}' or apps in gui_components: {{ gui_components }}"
+  tags: always
+
 - name: Install GUI
   ansible.builtin.import_tasks: 01-install.yml
   tags: gui-install
@@ -8,3 +21,7 @@
 - name: Configure GUI
   ansible.builtin.import_tasks: 02-config.yml
   tags: gui-config
+
+- name: Remove unselected GUI components
+  ansible.builtin.import_tasks: 03-remove.yml
+  tags: gui-remove

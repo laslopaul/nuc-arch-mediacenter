@@ -1,13 +1,63 @@
 ---
 # code: language=ansible
 
-# supported variants: i3 and labwc
+# supported variants: i3, labwc and none (no desktop).
+# The desktop not selected here gets its config removed.
 desktop: labwc
 
-# paths for config files & folders
-subfolders:
-  i3: [".config/i3", ".config/alacritty"]
-  labwc: [".config/labwc", ".config/alacritty"]
+# Apps to install & configure. An app left out of the list gets its
+# config removed. To remove the GUI completely, set desktop to none,
+# empty this list and enable the purge options below.
+gui_components:
+  - kodi
+  - firefox
+  - alacritty
+
+# Also uninstall packages of removed desktops & apps.
+# Packages still required by something else, or by a selected
+# desktop / app, are kept.
+gui_purge_packages: true
+# Also delete user data (Kodi library & addons, Firefox profile)
+# of removed apps. Can't be undone.
+gui_purge_userdata: true
+
+# packages of each desktop & app
+gui_packages:
+  i3:
+    - i3-wm
+    - xorg-xinit
+    - xorg-xrandr
+    - xorg-xset
+    - xorg-server
+    - ttf-hack
+  labwc:
+    - labwc
+    - ttf-hack
+  kodi:
+    - kodi
+  firefox:
+    - firefox
+  alacritty:
+    - alacritty
+    - ttf-hack
+
+# config files & folders of each desktop & app, relative to user's home
+gui_configs:
+  i3:
+    - .config/i3
+    - .xinitrc
+  labwc:
+    - .config/labwc
+  alacritty:
+    - .config/alacritty
+
+# user data of each app, relative to user's home
+gui_userdata:
+  kodi:
+    - .kodi
+  firefox:
+    - .mozilla
+    - .cache/mozilla
 
 configs_exec:
   i3:

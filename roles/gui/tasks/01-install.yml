@@ -1,31 +1,9 @@
 ---
 # code: language=ansible
 
-- name: Install i3 and Xorg
+- name: Install selected desktop & apps
   community.general.pacman:
-    name:
-      - i3-wm
-      - xorg-xinit
-      - xorg-server
-      - xorg-xrandr
-      - xorg-xset
+    name: "{{ gui_selected | map('extract', gui_packages) | flatten | unique }}"
     state: present
     update_cache: true
-  when: desktop == 'i3'
-
-- name: Install labwc (Wayland)
-  community.general.pacman:
-    name: labwc
-    state: present
-    update_cache: true
-  when: desktop == 'labwc'
-
-- name: Install apps
-  community.general.pacman:
-    name:
-      # - kodi
-      - firefox
-      - alacritty
-      - ttf-hack
-    state: present
-    update_cache: true
+  when: gui_selected | length > 0
