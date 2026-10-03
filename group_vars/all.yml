@@ -4,3 +4,16 @@
 username: kodi
 domain: nuc-server.lan
 zerotier_ip: "172.27.100.100"
+
+# base role: PipeWire disabled & uninstalled
+base_components:
+  - udiskie
+  - dnsmasq
+  - reflector
+base_purge_packages: true
+
+# gui role: GUI disabled, packages & user data removed
+desktop: none
+gui_components: []
+gui_purge_packages: true
+gui_purge_userdata: true
