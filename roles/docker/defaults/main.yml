@@ -5,6 +5,61 @@ docker_path: "/home/{{ username }}/docker"
 
 timezone: "Europe/Minsk"
 
+# Install Docker engine. When false, all services and Docker itself
+# are removed (see purge options below).
+docker_enabled: true
+
+# Services to deploy. A service left out of the list is stopped and
+# its containers & compose file are removed (see purge options below).
+docker_services:
+  - step-ca
+  - traefik
+  - qbittorrent
+  - vaultwarden
+  - plex
+  - immich
+  - syncthing
+
+# Also delete images of removed services.
+docker_purge_images: true
+# Also uninstall packages of removed components (step-cli, and Docker
+# itself when docker_enabled is false). Packages still required by
+# something else are kept.
+docker_purge_packages: true
+# Also delete data of removed services: their whole folder under
+# docker_path (config, databases, Vaultwarden vault, Immich photos,
+# .env files) and their named volumes. When docker_enabled is false,
+# docker_path and /var/lib/docker are deleted too. Can't be undone.
+docker_purge_data: false
+
+# folder of each service under docker_path, in deployment order
+# (services are removed in reverse order)
+docker_service_dirs:
+  step-ca: step
+  traefik: traefik
+  qbittorrent: qb
+  vaultwarden: vw
+  plex: plex
+  immich: immich
+  syncthing: syncthing
+
+# subfolders each service needs inside its folder
+docker_service_subdirs:
+  step-ca: [data]
+  qbittorrent: [config]
+  vaultwarden: [data]
+  plex: [config]
+  immich: [data, postgres]
+  syncthing: [config, data, data/share1]
+
+# services each service needs to be deployed
+docker_service_requires:
+  traefik: [step-ca]
+  qbittorrent: [traefik]
+  vaultwarden: [traefik]
+  immich: [traefik]
+  syncthing: [traefik]
+
 images:
   traefik: "traefik:v3.7.13"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.2.4"

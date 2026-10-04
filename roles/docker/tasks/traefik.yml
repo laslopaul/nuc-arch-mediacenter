@@ -7,7 +7,7 @@
     state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
-    mode: '0755'
+    mode: "0755"
   loop:
     - traefik
     - traefik/ssl
@@ -39,13 +39,21 @@
     state: started
     enabled: true
 
-
 - name: Copy Traefik static config
   ansible.builtin.copy:
     src: traefik/traefik.yml
     dest: "{{ docker_path }}/traefik/traefik.yml"
-    mode: '0644'
+    mode: "0644"
   register: traefik_static_config
+
+# Default cert (Step CA) & shared middlewares; picked up without restart
+- name: Copy Traefik TLS config
+  ansible.builtin.copy:
+    src: traefik/dynamic/tls.yml
+    dest: "{{ docker_path }}/traefik/dynamic/tls.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0644"
 
 - name: Create Traefik route for the Let's Encrypt wildcard cert
   ansible.builtin.template:
@@ -53,7 +61,7 @@
     dest: "{{ docker_path }}/traefik/dynamic/acme.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
-    mode: '0644'
+    mode: "0644"
 
 - name: Create Docker Compose file
   ansible.builtin.template:
@@ -61,7 +69,7 @@
     dest: "{{ docker_path }}/traefik/docker-compose.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
-    mode: '0644'
+    mode: "0644"
 
 - name: Launch Traefik service
   community.docker.docker_compose_v2:

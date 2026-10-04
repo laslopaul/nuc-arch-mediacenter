@@ -10,19 +10,19 @@ The machine configures itself with `ansible-pull`: a systemd timer pulls this re
 | --- | --- |
 | `base` | `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: udiskie automount, PipeWire audio, dnsmasq DNS server for the Zerotier LAN, reflector mirrorlist refresh |
 | `gui` | labwc (Wayland) or i3 (Xorg) desktop, plus optional apps: Kodi, Firefox, Alacritty |
-| `docker` | Docker with a weekly image cleanup timer, and these services: |
+| `docker` | Docker with a weekly image cleanup timer, and optional services: |
 
-Docker services, all deployed with Docker Compose under `~/docker/<service>`:
+Docker services, all deployed with Docker Compose under `~/docker/<folder>`:
 
-| Service | Address |
-| --- | --- |
-| Step CA (private certificate authority) | `https://<domain>:9000` |
-| Traefik (reverse proxy, TLS from Step CA, and Let's Encrypt for `<public_domain>`) | port 443 |
-| qBittorrent | `https://qb.<domain>` |
-| Vaultwarden | `https://vw.<domain>` |
-| Plex | host network, port 32400 |
-| Immich | `https://immich.<domain>` |
-| Syncthing | `https://sync.<domain>` |
+| Service | Name in `docker_services` | Address |
+| --- | --- | --- |
+| Step CA (private certificate authority) | `step-ca` | `https://<domain>:9000` |
+| Traefik (reverse proxy, TLS from Step CA, and Let's Encrypt for `<public_domain>`) | `traefik` | port 443 |
+| qBittorrent | `qbittorrent` | `https://qb.<domain>` |
+| Vaultwarden | `vaultwarden` | `https://vw.<domain>` |
+| Plex | `plex` | host network, port 32400 |
+| Immich | `immich` | `https://immich.<domain>` |
+| Syncthing | `syncthing` | `https://sync.<domain>` |
 
 The services behind Traefik also answer on `<public_domain>` (e.g. `https://vw.<public_domain>`).
 
@@ -75,7 +75,7 @@ ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter --tags gui
 | --- | --- |
 | `base` | `base`, `ansible-pull`, `user`, `udiskie`, `pipewire`, `dnsmasq`, `reflector` |
 | `gui` | `gui`, `gui-install`, `gui-config`, `gui-remove` |
-| `docker` | `docker`, `docker-install`, `step-ca`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing` |
+| `docker` | `docker`, `docker-install`, `step-ca`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing`, `docker-remove` |
 
 ## Configuration
 
@@ -92,7 +92,7 @@ Role defaults, which can be overridden in `group_vars/all.yml`:
 
 - [roles/base/defaults/main.yml](roles/base/defaults/main.yml): SSH public key, repo URL, components, reflector mirror settings
 - [roles/gui/defaults/main.yml](roles/gui/defaults/main.yml): desktop, apps and their packages & config paths
-- [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml): Docker image versions, timezone
+- [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml): services, their folders & dependencies, Docker image versions, timezone
 
 ### Selecting base components
 
@@ -143,6 +143,40 @@ gui_components: []
 ```
 
 The desktop autostart configs launch Firefox and Alacritty. If you remove those apps but keep a desktop, the desktop fails to start them on login.
+
+### Selecting Docker services
+
+```yaml
+docker_enabled: true
+docker_services:
+  - step-ca
+  - traefik
+  - qbittorrent
+  - vaultwarden
+  - plex
+  - immich
+  - syncthing
+docker_purge_images: true
+docker_purge_packages: true
+docker_purge_data: false
+```
+
+A service left out of `docker_services` is stopped, its containers are removed with `docker compose down`, and its compose file is deleted. On top of that:
+
+- its images are deleted (`docker_purge_images`)
+- removing `step-ca` also removes the `step` symlink, and uninstalls `step-cli` (`docker_purge_packages`)
+- removing `traefik` also stops and removes `traefik-cert-renewer.service`
+- with `docker_purge_data: true`, its whole folder under `~/docker` and its named volumes are deleted. That includes its config, databases, `.env` secrets, the **Vaultwarden vault** and the **Immich photo library**, and for `step-ca` the CA keys (its root certificate is also removed from the system trust store). **This can't be undone**, which is why it's off by default. Media in `~/Library` (used by Plex and qBittorrent) is never touched.
+
+Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Immich and Syncthing need `traefik`, and `traefik` needs `step-ca`. Removal runs in reverse order (apps, then Traefik, then Step CA).
+
+To add a service with a plain Docker Compose deployment:
+
+1. Add `roles/docker/templates/<service>-compose.yml.j2`.
+2. In [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml), add the service to `docker_services`, `docker_service_dirs` and `images`. Add it to `docker_service_subdirs` if it needs subfolders, and to `docker_service_requires` if it runs behind Traefik.
+3. Add an `import_tasks: service.yml` entry with `docker_service: <service>` to [roles/docker/tasks/main.yml](roles/docker/tasks/main.yml).
+
+To remove Docker completely, set `docker_enabled: false`. All services are removed as above, the Docker service and `docker-cleanup.timer` are stopped and disabled, and with `docker_purge_packages` the Docker packages are uninstalled. With `docker_purge_data: true`, `~/docker` and `/var/lib/docker` (all images, containers and volumes, including ones not managed by this repo) are deleted too.
 
 ## Maintenance
 

@@ -1,34 +1,82 @@
 ---
 # code: language=ansible
 
+- name: Select Docker services
+  ansible.builtin.set_fact:
+    docker_selected: "{{ docker_services if docker_enabled | bool else [] }}"
+  tags: always
+
+- name: Validate Docker services
+  ansible.builtin.assert:
+    that: docker_services | difference(docker_service_dirs | list) | length == 0
+    fail_msg: "Unsupported services in docker_services: {{ docker_services | difference(docker_service_dirs | list) }}"
+  tags: always
+
+- name: Check Docker service dependencies
+  ansible.builtin.assert:
+    that: docker_service_requires.get(item, []) | difference(docker_selected) | length == 0
+    fail_msg: "{{ item }} requires {{ docker_service_requires.get(item, []) | join(', ') }} in docker_services"
+    quiet: true
+  loop: "{{ docker_selected }}"
+  tags: always
+
 - name: Install Docker
   ansible.builtin.import_tasks: install.yml
+  when: docker_enabled | bool
   tags: docker-install
 
 - name: Install Step CA
+  ansible.builtin.import_tasks: service.yml
+  vars:
+    docker_service: step-ca
+  when: "'step-ca' in docker_selected"
+  tags: step-ca
+
+- name: Install step-cli & trust Step CA
   ansible.builtin.import_tasks: step-ca.yml
+  when: "'step-ca' in docker_selected"
   tags: step-ca
 
 - name: Install Traefik
   ansible.builtin.import_tasks: traefik.yml
+  when: "'traefik' in docker_selected"
   tags: traefik
 
 - name: Install qbittorrent
-  ansible.builtin.import_tasks: qbittorrent.yml
+  ansible.builtin.import_tasks: service.yml
+  vars:
+    docker_service: qbittorrent
+  when: "'qbittorrent' in docker_selected"
   tags: qb
 
 - name: Install Vaultwarden
-  ansible.builtin.import_tasks: vaultwarden.yml
+  ansible.builtin.import_tasks: service.yml
+  vars:
+    docker_service: vaultwarden
+  when: "'vaultwarden' in docker_selected"
   tags: vw
 
 - name: Install Plex
-  ansible.builtin.import_tasks: plex.yml
+  ansible.builtin.import_tasks: service.yml
+  vars:
+    docker_service: plex
+  when: "'plex' in docker_selected"
   tags: plex
 
 - name: Install Immich
-  ansible.builtin.import_tasks: immich.yml
+  ansible.builtin.import_tasks: service.yml
+  vars:
+    docker_service: immich
+  when: "'immich' in docker_selected"
   tags: immich
 
 - name: Install Syncthing
-  ansible.builtin.import_tasks: syncthing.yml
+  ansible.builtin.import_tasks: service.yml
+  vars:
+    docker_service: syncthing
+  when: "'syncthing' in docker_selected"
   tags: syncthing
+
+- name: Remove unselected Docker services
+  ansible.builtin.import_tasks: remove.yml
+  tags: docker-remove

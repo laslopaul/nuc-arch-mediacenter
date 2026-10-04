@@ -1,0 +1,176 @@
+---
+# code: language=ansible
+
+- name: Find unselected Docker services
+  ansible.builtin.set_fact:
+    # reverse deployment order: apps first, then Traefik (owner of the
+    # traefik_traefik network), then Step CA
+    docker_removed: "{{ docker_service_dirs | list | reverse | reject('in', docker_selected) | list }}"
+
+- name: Check for Docker
+  ansible.builtin.stat:
+    path: /usr/bin/docker
+  register: docker_binary
+
+- name: Check for compose files of unselected services
+  ansible.builtin.stat:
+    path: "{{ docker_path }}/{{ docker_service_dirs[item] }}/docker-compose.yml"
+  loop: "{{ docker_removed }}"
+  register: docker_removed_compose
+
+- name: Stop unselected services and remove their containers
+  community.docker.docker_compose_v2:
+    project_src: "{{ item.stat.path | dirname }}"
+    state: absent
+    remove_images: "{{ 'all' if docker_purge_images | bool else omit }}"
+    remove_volumes: "{{ docker_purge_data | bool }}"
+    remove_orphans: true
+  loop: "{{ docker_removed_compose.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when:
+    - docker_binary.stat.exists
+    - item.stat.exists
+
+# Traefik
+- name: Check for traefik-cert-renewer.service
+  ansible.builtin.stat:
+    path: /etc/systemd/system/traefik-cert-renewer.service
+  register: traefik_renewer_unit
+  when: "'traefik' in docker_removed"
+
+- name: Disable traefik-cert-renewer.service
+  ansible.builtin.systemd:
+    name: traefik-cert-renewer
+    state: stopped
+    enabled: false
+  when:
+    - "'traefik' in docker_removed"
+    - traefik_renewer_unit.stat.exists
+
+- name: Remove traefik-cert-renewer.service
+  ansible.builtin.file:
+    path: /etc/systemd/system/traefik-cert-renewer.service
+    state: absent
+  register: traefik_renewer_removed
+  when: "'traefik' in docker_removed"
+
+# Step CA
+- name: Check for Step CA root certificate
+  ansible.builtin.stat:
+    path: "{{ docker_path }}/step/data/certs/root_ca.crt"
+  register: step_root_ca
+  when:
+    - "'step-ca' in docker_removed"
+    - docker_purge_data | bool
+
+- name: Remove Step CA root certificate from the system trust store
+  ansible.builtin.command:
+    cmd: "trust anchor --remove {{ step_root_ca.stat.path }}"
+  register: step_trust_remove
+  changed_when: step_trust_remove.rc == 0
+  # fails when the certificate isn't in the trust store anymore
+  failed_when: false
+  when:
+    - "'step-ca' in docker_removed"
+    - docker_purge_data | bool
+    - step_root_ca.stat.exists
+
+- name: Remove symlink to step
+  ansible.builtin.file:
+    path: /usr/local/bin/step
+    state: absent
+  when: "'step-ca' in docker_removed"
+
+# Service files
+- name: Remove compose files of unselected services
+  ansible.builtin.file:
+    path: "{{ docker_path }}/{{ docker_service_dirs[item] }}/docker-compose.yml"
+    state: absent
+  loop: "{{ docker_removed }}"
+  when: not docker_purge_data | bool
+
+- name: Remove folders of unselected services
+  ansible.builtin.file:
+    path: "{{ docker_path }}/{{ docker_service_dirs[item] }}"
+    state: absent
+  loop: "{{ docker_removed }}"
+  when: docker_purge_data | bool
+
+# Docker engine
+- name: Check for docker-cleanup timer
+  ansible.builtin.stat:
+    path: /etc/systemd/system/docker-cleanup.timer
+  register: docker_cleanup_unit
+  when: not docker_enabled | bool
+
+- name: Disable docker-cleanup timer
+  ansible.builtin.systemd:
+    name: docker-cleanup.timer
+    state: stopped
+    enabled: false
+  when:
+    - not docker_enabled | bool
+    - docker_cleanup_unit.stat.exists
+
+- name: Remove docker-cleanup script and units
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /usr/local/bin/docker-cleanup.sh
+    - /etc/systemd/system/docker-cleanup.timer
+    - /etc/systemd/system/docker-cleanup.service
+  register: docker_cleanup_removed
+  when: not docker_enabled | bool
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: traefik_renewer_removed is changed or docker_cleanup_removed is changed
+
+- name: Disable Docker service
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - docker.socket
+    - docker.service
+  when:
+    - not docker_enabled | bool
+    - docker_binary.stat.exists
+
+- name: Delete Docker data
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ docker_path }}"
+    - /var/lib/docker
+  when:
+    - not docker_enabled | bool
+    - docker_purge_data | bool
+
+- name: Uninstall packages of removed components not required by others
+  vars:
+    docker_removed_packages: >-
+      {{ (['step-cli'] if 'step-ca' in docker_removed else [])
+         + ([] if docker_enabled | bool else ['docker-compose', 'fuse-overlayfs', 'docker', 'containerd', 'runc']) }}
+  # Repeat until nothing changes: removing one package may leave another
+  # one no longer required.
+  ansible.builtin.shell: |
+    progress=1
+    while [ "$progress" = 1 ]; do
+      progress=0
+      for pkg in {{ docker_removed_packages | map('quote') | join(' ') }}; do
+        if pacman -Qqt "$pkg" >/dev/null 2>&1; then
+          pacman -R --noconfirm "$pkg" && echo "removed $pkg" && progress=1
+        fi
+      done
+    done
+  register: docker_purge
+  changed_when: "'removed' in docker_purge.stdout"
+  when:
+    - docker_purge_packages | bool
+    - docker_removed_packages | length > 0
