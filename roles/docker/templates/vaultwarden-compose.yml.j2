@@ -13,7 +13,7 @@ services:
       - traefik_traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vw.rule=Host(`vw.{{ domain }}`)"
+      - "traefik.http.routers.vw.rule=Host(`vw.{{ domain }}`) || Host(`vw.{{ public_domain }}`)"
       - "traefik.http.routers.vw.entrypoints=websecure"
       - "traefik.http.routers.vw.tls=true"
       - "traefik.http.services.vw.loadbalancer.server.port=80"

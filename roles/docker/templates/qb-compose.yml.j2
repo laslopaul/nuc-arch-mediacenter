@@ -18,7 +18,7 @@ services:
       - traefik_traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.qb.rule=Host(`qb.{{ domain }}`)"
+      - "traefik.http.routers.qb.rule=Host(`qb.{{ domain }}`) || Host(`qb.{{ public_domain }}`)"
       - "traefik.http.routers.qb.entrypoints=websecure"
       - "traefik.http.routers.qb.tls=true"
       - "traefik.http.services.qb.loadbalancer.server.port=8080"

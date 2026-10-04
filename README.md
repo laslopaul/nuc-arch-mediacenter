@@ -24,6 +24,8 @@ Docker services, all deployed with Docker Compose under `~/docker/<service>`:
 | Immich | `https://immich.<domain>` |
 | Syncthing | `https://sync.<domain>` |
 
+The services behind Traefik also answer on `<public_domain>` (e.g. `https://vw.<public_domain>`).
+
 `<domain>` is `nuc-server.lan` by default. dnsmasq resolves it and all its subdomains to the server's Zerotier IP.
 
 ## Install base system
