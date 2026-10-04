@@ -16,10 +16,10 @@ gui_components:
 # Also uninstall packages of removed desktops & apps.
 # Packages still required by something else, or by a selected
 # desktop / app, are kept.
-gui_purge_packages: true
+gui_purge_packages: false
 # Also delete user data (Kodi library & addons, Firefox profile)
 # of removed apps. Can't be undone.
-gui_purge_userdata: true
+gui_purge_userdata: false
 
 # packages of each desktop & app
 gui_packages:
