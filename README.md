@@ -17,7 +17,7 @@ Docker services, all deployed with Docker Compose under `~/docker/<service>`:
 | Service | Address |
 | --- | --- |
 | Step CA (private certificate authority) | `https://<domain>:9000` |
-| Traefik (reverse proxy, TLS from Step CA) | port 443 |
+| Traefik (reverse proxy, TLS from Step CA, and Let's Encrypt for `<public_domain>`) | port 443 |
 | qBittorrent | `https://qb.<domain>` |
 | Vaultwarden | `https://vw.<domain>` |
 | Plex | host network, port 32400 |
@@ -54,6 +54,13 @@ The first run installs the `ansible-pull` timer. From then on the configuration 
 
 The `docker` role expects the Step CA admin provisioner password in `/home/kodi/pki/admin.txt`, to issue Traefik's wildcard certificate.
 
+Traefik also gets a Let's Encrypt wildcard certificate for `*.<public_domain>` (without the apex domain) through a DNS-01 challenge with Spaceship DNS. It needs a Spaceship API key with DNS records read & write access in `/home/kodi/docker/traefik/.env`:
+
+```bash
+SPACESHIP_API_KEY=...
+SPACESHIP_API_SECRET=...
+```
+
 ### Running only part of the configuration
 
 Every role and task file has a tag:
@@ -76,6 +83,7 @@ Shared variables are in [group_vars/all.yml](group_vars/all.yml):
 | --- | --- | --- |
 | `username` | `kodi` | Main user |
 | `domain` | `nuc-server.lan` | Domain for the services |
+| `public_domain` | `laslopaul.dev` | Public domain with a Let's Encrypt wildcard certificate |
 | `zerotier_ip` | `172.27.100.100` | Server's Zerotier IP; dnsmasq listens on it |
 
 Role defaults, which can be overridden in `group_vars/all.yml`:

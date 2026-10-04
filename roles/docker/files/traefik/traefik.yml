@@ -9,5 +9,16 @@ providers:
     directory: /etc/traefik/dynamic
     watch: true
 
+certificatesResolvers:
+  le:
+    acme:
+      storage: /letsencrypt/acme.json
+      dnsChallenge:
+        provider: spaceship
+        # Public resolvers, so the propagation check isn't answered by local DNS
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+
 log:
   level: DEBUG

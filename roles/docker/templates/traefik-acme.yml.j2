@@ -1,0 +1,14 @@
+# Requests the wildcard certificate for the public domain. Traefik then serves it,
+# by SNI, on every router with tls=true whose Host is under the public domain.
+# The apex isn't included, it's hosted elsewhere (GitHub Pages)
+http:
+  routers:
+    acme-wildcard:
+      rule: "Host(`acme-wildcard.{{ public_domain }}`)"
+      entryPoints:
+        - websecure
+      service: noop@internal
+      tls:
+        certResolver: le
+        domains:
+          - main: "*.{{ public_domain }}"

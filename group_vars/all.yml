@@ -3,6 +3,7 @@
 
 username: kodi
 domain: nuc-server.lan
+public_domain: laslopaul.dev
 zerotier_ip: "172.27.100.100"
 
 # base role: PipeWire disabled & uninstalled

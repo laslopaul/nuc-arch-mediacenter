@@ -11,6 +11,8 @@
   loop:
     - traefik
     - traefik/ssl
+    - traefik/dynamic
+    - traefik/letsencrypt
 
 - name: Generate TLS cert for traefik
   ansible.builtin.command:
@@ -43,6 +45,15 @@
     src: traefik/traefik.yml
     dest: "{{ docker_path }}/traefik/traefik.yml"
     mode: '0644'
+  register: traefik_static_config
+
+- name: Create Traefik route for the Let's Encrypt wildcard cert
+  ansible.builtin.template:
+    src: traefik-acme.yml.j2
+    dest: "{{ docker_path }}/traefik/dynamic/acme.yml"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
 
 - name: Create Docker Compose file
   ansible.builtin.template:
@@ -55,7 +66,8 @@
 - name: Launch Traefik service
   community.docker.docker_compose_v2:
     project_src: "{{ docker_path }}/traefik"
-    recreate: auto
+    # Static config is only read on startup
+    recreate: "{{ 'always' if traefik_static_config.changed else 'auto' }}"
     remove_orphans: false
     pull: missing
     state: present

@@ -7,6 +7,8 @@ services:
       - "--configFile=/etc/traefik/traefik.yml"
     environment:
       - TZ={{ timezone }}
+      - SPACESHIP_API_KEY=${SPACESHIP_API_KEY}
+      - SPACESHIP_API_SECRET=${SPACESHIP_API_SECRET}
     ports:
       - "443:443"
     volumes:
@@ -14,6 +16,7 @@ services:
       - "{{ docker_path }}/traefik/ssl:/certs:ro"
       - "{{ docker_path }}/traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
       - "{{ docker_path }}/traefik/dynamic:/etc/traefik/dynamic"
+      - "{{ docker_path }}/traefik/letsencrypt:/letsencrypt"
     networks:
       - traefik
 

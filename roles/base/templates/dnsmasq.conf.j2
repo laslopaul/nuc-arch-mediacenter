@@ -1,5 +1,10 @@
 listen-address={{ zerotier_ip }}
 
+# Bind only to the listen address instead of 0.0.0.0, leaving port 53 free
+# on other interfaces (Netbird DNS). bind-dynamic, unlike bind-interfaces,
+# also binds the address once the Zerotier interface comes up after dnsmasq
+bind-dynamic
+
 # Never forward plain names (without a dot or domain part)
 domain-needed
 
