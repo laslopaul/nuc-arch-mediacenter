@@ -61,7 +61,7 @@ docker_service_requires:
   syncthing: [traefik]
 
 images:
-  traefik: "traefik:v3.7.13"
+  traefik: "traefik:v3.7.14"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.2.4"
   vaultwarden: "vaultwarden/server:1.37.4"
   plex: "lscr.io/linuxserver/plex:1.43.4"
