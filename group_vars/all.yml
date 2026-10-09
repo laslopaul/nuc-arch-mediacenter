@@ -8,7 +8,7 @@ zerotier_ip: "172.27.100.100"
 
 # base role: PipeWire disabled & uninstalled
 base_components:
-  - udiskie
+  - udev-media-automount
   - dnsmasq
   - reflector
 base_purge_packages: true

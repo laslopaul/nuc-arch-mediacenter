@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+AUTOMOUNT_OPTS='users,nosuid,nodev,relatime,uid={{ ansible_facts.getent_passwd[username][1] }},gid={{ ansible_facts.getent_passwd[username][2] }},dmask=022,fmask=133'
+AUTOMOUNT_TYPE='{{ item }}'
+{% if item == 'ntfs' %}
+if command -v ntfs-3g >/dev/null 2>&1; then
+    AUTOMOUNT_TYPE='ntfs-3g'
+else
+    AUTOMOUNT_TYPE='ntfs3'
+fi
+{% endif %}

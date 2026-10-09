@@ -1,0 +1,90 @@
+---
+# code: language=ansible
+
+- name: Install headless automount dependencies
+  community.general.pacman:
+    name: [git, util-linux, coreutils, procps-ng]
+    state: present
+    update_cache: true
+
+- name: Create automount source parent directory
+  ansible.builtin.file:
+    path: "{{ media_automount_source_dir | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Fetch pinned udev-media-automount source
+  ansible.builtin.git:
+    repo: "{{ media_automount_repo }}"
+    dest: "{{ media_automount_source_dir }}"
+    version: "{{ media_automount_revision }}"
+
+- name: Create media and automount configuration directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /media
+    - /etc/media-automount.d
+
+- name: Install headless automount helper
+  ansible.builtin.copy:
+    src: "{{ media_automount_source_dir }}/media-automount"
+    dest: /usr/bin/media-automount
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install automount systemd template
+  ansible.builtin.copy:
+    src: "{{ media_automount_source_dir }}/media-automount@.service"
+    dest: /etc/systemd/system/media-automount@.service
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Install filesystem defaults
+  ansible.builtin.copy:
+    src: "{{ media_automount_source_dir }}/media-automount.d/{{ item }}"
+    dest: "/etc/media-automount.d/{{ item }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [auto, hfsplus]
+
+- name: Look up automount user
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ username }}"
+
+- name: Configure user access to FAT, exFAT and NTFS media
+  ansible.builtin.template:
+    src: media-automount-filesystem.j2
+    dest: "/etc/media-automount.d/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [vfat, exfat, ntfs]
+
+- name: Install removable media udev rules
+  ansible.builtin.copy:
+    src: media-automount.rules
+    dest: /etc/udev/rules.d/99-media-automount.rules
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload automount udev rules
+
+- name: Enable fstrim
+  ansible.builtin.systemd:
+    name: fstrim.timer
+    enabled: true

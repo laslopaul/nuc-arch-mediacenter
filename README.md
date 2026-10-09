@@ -8,7 +8,7 @@ The machine configures itself with `ansible-pull`: a systemd timer pulls this re
 
 | Role | What it sets up |
 | --- | --- |
-| `base` | `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: udiskie automount, PipeWire audio, dnsmasq DNS server for the Zerotier LAN, reflector mirrorlist refresh |
+| `base` | `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: removable drive automounting with udev-media-automount, PipeWire audio, dnsmasq DNS server for the Zerotier LAN, reflector mirrorlist refresh |
 | `gui` | labwc (Wayland) or i3 (Xorg) desktop, plus optional apps: Kodi, Firefox, Alacritty |
 | `docker` | Docker with a weekly image cleanup timer, and optional services: |
 
@@ -73,7 +73,7 @@ ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter --tags gui
 
 | Role | Tags |
 | --- | --- |
-| `base` | `base`, `ansible-pull`, `user`, `udiskie`, `pipewire`, `dnsmasq`, `reflector` |
+| `base` | `base`, `ansible-pull`, `user`, `udev-media-automount`, `pipewire`, `dnsmasq`, `reflector` |
 | `gui` | `gui`, `gui-install`, `gui-config`, `gui-remove` |
 | `docker` | `docker`, `docker-install`, `step-ca`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing`, `docker-remove` |
 
@@ -98,7 +98,7 @@ Role defaults, which can be overridden in `group_vars/all.yml`:
 
 ```yaml
 base_components:
-  - udiskie
+  - udev-media-automount
   - pipewire
   - dnsmasq
   - reflector
@@ -110,8 +110,30 @@ A component left out of `base_components` gets its services stopped & disabled, 
 Things to keep in mind:
 
 - Removing `dnsmasq` stops DNS for `<domain>` on the Zerotier LAN.
-- The desktop autostart configs launch `udiskie`, so it fails to start if udiskie is removed.
-- `fstrim.timer` is enabled by the udiskie tasks.
+- `fstrim.timer` is enabled by the udev-media-automount tasks.
+
+### Removable drive automounting
+
+The `udev-media-automount` component installs the headless helper from a pinned
+[upstream revision](https://github.com/Ferk/udev-media-automount/tree/efca3c5a0548211c84e98de16b41641a961b6273), without the
+optional dmenu frontend or any GTK dependencies. `media_automount_revision` in
+base defaults controls updates. No AUR build tools are needed on the server.
+
+Udev starts a systemd service for inserted USB filesystems and SD card partitions.
+Internal SATA/NVMe disks and encrypted containers are not automatically mounted.
+The helper leaves devices listed in `/etc/fstab` alone. Mounts appear under
+`/media/<label>.<filesystem>` (or a device name when unlabeled). FAT, exFAT and
+NTFS mounts grant the configured `username` write access; Unix filesystems retain
+their on-disk ownership. Filesystem drivers/helpers such as `ntfs-3g` must already
+be available when needed.
+
+Migration stops the old udiskie user service and removes its configuration and
+Polkit rule. With `base_purge_packages: true`, it also removes udiskie, UDisks2 and
+their unused dependencies when no other package requires them. Existing mounts
+are left in place: reconnect drives or reboot to use the new automounter, and
+update any consumers of the old `/run/media/<user>/...` paths. The role reloads
+udev rules without triggering all existing devices. Removing the component stops
+future automounting without unmounting active drives.
 
 ### Selecting desktop & apps
 

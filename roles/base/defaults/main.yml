@@ -7,7 +7,7 @@ repo_url: "https://github.com/laslopaul/nuc-arch-mediacenter"
 # Optional components to install & configure. A component left out of the
 # list gets its services stopped & disabled and its config removed.
 base_components:
-  - udiskie
+  - udev-media-automount
   - pipewire
   - dnsmasq
   - reflector
@@ -41,3 +41,8 @@ reflector_sort: rate
 reflector_number: 12
 reflector_connection_timeout: 5
 reflector_download_timeout: 5
+
+# Install only the headless upstream helper, not its optional dmenu frontend.
+media_automount_repo: https://github.com/Ferk/udev-media-automount.git
+media_automount_revision: efca3c5a0548211c84e98de16b41641a961b6273
+media_automount_source_dir: /usr/local/src/udev-media-automount

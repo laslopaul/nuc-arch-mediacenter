@@ -6,11 +6,17 @@
     path: "/home/{{ username }}/.config/systemd/user/udiskie.service"
   register: udiskie_unit
 
+- name: Look up legacy automounter user
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ username }}"
+  when: udiskie_unit.stat.exists
+
 - name: Disable udiskie service for user
   become: true
   become_user: "{{ username }}"
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[username][1] }}"
   ansible.builtin.systemd:
     scope: user
     enabled: false
@@ -30,7 +36,7 @@
   become: true
   become_user: "{{ username }}"
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[username][1] }}"
   ansible.builtin.systemd:
     scope: user
     daemon_reload: true
@@ -46,7 +52,7 @@
   ansible.builtin.shell: |
     for pkg in udiskie udisks2; do
       if pacman -Qqt "$pkg" >/dev/null 2>&1; then
-        pacman -R --noconfirm "$pkg" && echo "removed $pkg"
+        pacman -Rs --noconfirm "$pkg" && echo "removed $pkg"
       fi
     done
   register: udiskie_purge

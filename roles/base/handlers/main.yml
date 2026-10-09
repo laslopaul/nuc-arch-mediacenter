@@ -24,3 +24,7 @@
   ansible.builtin.systemd:
     name: reflector.service
     state: restarted
+
+- name: Reload automount udev rules
+  ansible.builtin.command: udevadm control --reload-rules
+  changed_when: true

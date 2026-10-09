@@ -1,0 +1,6 @@
+# Mount USB filesystems and SD card partitions; leave internal disks alone.
+SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{ID_FS_USAGE}=="filesystem", ACTION=="add", RUN+="/usr/bin/systemctl --no-block restart media-automount@%k.service"
+SUBSYSTEM=="block", KERNEL=="mmcblk[0-9]*p[0-9]*", ENV{ID_FS_USAGE}=="filesystem", ACTION=="add", RUN+="/usr/bin/systemctl --no-block restart media-automount@%k.service"
+# udev preserves device properties for removal events.
+SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ACTION=="remove", RUN+="/usr/bin/systemctl --no-block restart media-automount@%k.service"
+SUBSYSTEM=="block", KERNEL=="mmcblk[0-9]*p[0-9]*", ACTION=="remove", RUN+="/usr/bin/systemctl --no-block restart media-automount@%k.service"

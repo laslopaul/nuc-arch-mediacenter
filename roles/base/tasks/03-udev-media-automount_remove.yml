@@ -1,0 +1,26 @@
+---
+# code: language=ansible
+
+# Do not stop instantiated mount services: existing mounts must remain usable.
+- name: Remove automount rules, helper and configuration
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/udev/rules.d/99-media-automount.rules
+    - /etc/systemd/system/media-automount@.service
+    - /usr/bin/media-automount
+    - /etc/media-automount.d/auto
+    - /etc/media-automount.d/hfsplus
+    - /etc/media-automount.d/vfat
+    - /etc/media-automount.d/exfat
+    - /etc/media-automount.d/ntfs
+  notify:
+    - Reload automount udev rules
+    - Reload systemd
+
+- name: Remove automount source checkout
+  ansible.builtin.file:
+    path: "{{ media_automount_source_dir }}"
+    state: absent
+  when: base_purge_packages | bool

@@ -9,15 +9,20 @@
   ansible.builtin.import_tasks: 02-configure_user.yml
   tags: user
 
-- name: Configure udiskie
-  ansible.builtin.import_tasks: 03-udiskie.yml
-  when: "'udiskie' in base_components"
-  tags: udiskie
+- name: Configure udev-media-automount
+  ansible.builtin.import_tasks: 03-udev-media-automount.yml
+  when: "'udev-media-automount' in base_components"
+  tags: udev-media-automount
 
-- name: Remove udiskie
+# Always clean up the legacy user automounter during migration.
+- name: Remove legacy udiskie
   ansible.builtin.import_tasks: 03-udiskie_remove.yml
-  when: "'udiskie' not in base_components"
-  tags: udiskie
+  tags: [udev-media-automount, udiskie]
+
+- name: Remove udev-media-automount
+  ansible.builtin.import_tasks: 03-udev-media-automount_remove.yml
+  when: "'udev-media-automount' not in base_components"
+  tags: udev-media-automount
 
 - name: Configure pipewire
   ansible.builtin.import_tasks: 04-pipewire.yml

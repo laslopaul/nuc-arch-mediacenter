@@ -1,7 +1,0 @@
-program_options:
-  automount: true
-  notify: false
-
-device_config:
-  - is_luks: true
-    automount: false
