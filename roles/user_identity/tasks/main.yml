@@ -1,0 +1,10 @@
+---
+- name: Resolve managed user identity on the target
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ username }}"
+
+- name: Record managed user identity
+  ansible.builtin.set_fact:
+    managed_user_uid: "{{ ansible_facts.getent_passwd[username][1] }}"
+    managed_user_gid: "{{ ansible_facts.getent_passwd[username][2] }}"

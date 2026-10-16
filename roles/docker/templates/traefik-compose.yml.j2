@@ -13,10 +13,10 @@ services:
       - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "{{ docker_path }}/traefik/ssl:/certs:ro"
-      - "{{ docker_path }}/traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
-      - "{{ docker_path }}/traefik/dynamic:/etc/traefik/dynamic"
-      - "{{ docker_path }}/traefik/letsencrypt:/letsencrypt"
+      - "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/ssl:/certs:ro"
+      - "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/dynamic:/etc/traefik/dynamic"
+      - "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/letsencrypt:/letsencrypt"
     networks:
       - traefik
 

@@ -23,7 +23,7 @@
   become: true
   become_user: "{{ username }}"
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ managed_user_uid }}"
   ansible.builtin.systemd:
     scope: user
     daemon_reload: true

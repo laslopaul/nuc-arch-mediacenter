@@ -3,20 +3,14 @@
 
 - name: Check for udiskie.service of user
   ansible.builtin.stat:
-    path: "/home/{{ username }}/.config/systemd/user/udiskie.service"
+    path: "{{ managed_user_home }}/.config/systemd/user/udiskie.service"
   register: udiskie_unit
-
-- name: Look up legacy automounter user
-  ansible.builtin.getent:
-    database: passwd
-    key: "{{ username }}"
-  when: udiskie_unit.stat.exists
 
 - name: Disable udiskie service for user
   become: true
   become_user: "{{ username }}"
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[username][1] }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ managed_user_uid }}"
   ansible.builtin.systemd:
     scope: user
     enabled: false
@@ -29,14 +23,14 @@
     path: "{{ item }}"
     state: absent
   loop:
-    - "/home/{{ username }}/.config/systemd/user/udiskie.service"
-    - "/home/{{ username }}/.config/udiskie"
+    - "{{ managed_user_home }}/.config/systemd/user/udiskie.service"
+    - "{{ managed_user_home }}/.config/udiskie"
 
 - name: Reload systemd for user
   become: true
   become_user: "{{ username }}"
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[username][1] }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ managed_user_uid }}"
   ansible.builtin.systemd:
     scope: user
     daemon_reload: true
@@ -48,13 +42,9 @@
     state: absent
   notify: Restart polkit
 
-- name: Uninstall udiskie packages not required by others
-  ansible.builtin.shell: |
-    for pkg in udiskie udisks2; do
-      if pacman -Qqt "$pkg" >/dev/null 2>&1; then
-        pacman -Rs --noconfirm "$pkg" && echo "removed $pkg"
-      fi
-    done
-  register: udiskie_purge
-  changed_when: "'removed' in udiskie_purge.stdout"
+- name: Remove unused component packages
+  ansible.builtin.import_role:
+    name: package_cleanup
+  vars:
+    package_cleanup_candidates: ['udiskie', 'udisks2']
   when: base_purge_packages | bool

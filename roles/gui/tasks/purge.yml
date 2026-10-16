@@ -1,0 +1,6 @@
+---
+- name: Purge explicitly selected GUI user data
+  ansible.builtin.file:
+    path: "{{ managed_user_home }}/{{ item }}"
+    state: absent
+  loop: "{{ purge_gui_targets | map('extract', gui_userdata) | flatten }}"

@@ -1,0 +1,10 @@
+---
+- name: Update CA trust
+  ansible.builtin.command: update-ca-trust
+  changed_when: true
+
+- name: Restart Traefik certificate renewer
+  ansible.builtin.systemd:
+    name: traefik-cert-renewer.service
+    daemon_reload: true
+    state: restarted

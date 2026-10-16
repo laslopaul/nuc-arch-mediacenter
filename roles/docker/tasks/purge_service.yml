@@ -1,0 +1,57 @@
+---
+# docker CLI can have been removed by reconciliation. Never start the daemon
+# just to delete retained data; require it only when named volumes exist.
+- name: Require Docker for named volume removal unless purging all engine data
+  ansible.builtin.assert:
+    that: purge_docker_socket.stat.exists or purge_docker_engine_data | bool
+    fail_msg: Keep Docker enabled to purge named volumes, or explicitly purge all engine data.
+  when: docker_service_catalog[purge_service].volumes | length > 0
+
+- name: Inspect selected Compose project containers
+  community.docker.docker_host_info:
+    containers: true
+    containers_filters:
+      label: "com.docker.compose.project={{ docker_service_catalog[purge_service].project }}"
+  register: purge_container_info
+  when: purge_docker_socket.stat.exists
+
+- name: Require selected service containers to be removed first
+  ansible.builtin.assert:
+    that: purge_container_info.containers | default([]) | length == 0
+    fail_msg: Apply local.yml to remove the selected service before purging its data.
+
+- name: Delete selected project's named volumes
+  community.docker.docker_volume:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ docker_service_catalog[purge_service].volumes }}"
+  when: not purge_docker_engine_data | bool
+
+- name: Check for legacy Step CA certificate
+  ansible.builtin.stat:
+    path: "{{ docker_path }}/{{ docker_service_catalog['step-ca'].directory }}/data/certs/root_ca.crt"
+  register: purge_legacy_ca
+  when: purge_service == 'step-ca'
+
+- name: Remove legacy CA trust anchor before deleting its certificate
+  ansible.builtin.command:
+    argv: [trust, anchor, --remove, "{{ purge_legacy_ca.stat.path }}"]
+  changed_when: true
+  when:
+    - purge_service == 'step-ca'
+    - purge_legacy_ca.stat.exists
+
+- name: Remove managed Step CA trust and client state
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/ca-certificates/trust-source/anchors/nuc-step-ca.crt
+    - "{{ pki_path }}/step"
+  when: purge_service == 'step-ca'
+  notify: Update CA trust
+
+- name: Delete selected service's retained data directory
+  ansible.builtin.file:
+    path: "{{ docker_path }}/{{ docker_service_catalog[purge_service].directory }}"
+    state: absent

@@ -1,0 +1,6 @@
+---
+- name: Exercise GUI reconciliation on a disposable Arch VM
+  hosts: local
+  become: true
+  roles:
+    - gui

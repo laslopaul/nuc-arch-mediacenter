@@ -1,0 +1,25 @@
+---
+- name: Prepare a disposable Arch VM for GUI lifecycle checks
+  hosts: local
+  become: true
+  tasks:
+    - name: Require Arch Linux
+      ansible.builtin.assert:
+        that: ansible_distribution == 'Archlinux'
+    - name: Create isolated test user
+      ansible.builtin.user:
+        name: "{{ username }}"
+        home: "{{ managed_user_home }}"
+        create_home: true
+    - name: Create retained Firefox profile directory
+      ansible.builtin.file:
+        path: "{{ managed_user_home }}/.mozilla"
+        state: directory
+        owner: "{{ username }}"
+        mode: '0700'
+    - name: Create profile retention sentinel
+      ansible.builtin.copy:
+        content: keep-me
+        dest: "{{ managed_user_home }}/.mozilla/retention-sentinel"
+        owner: "{{ username }}"
+        mode: '0600'

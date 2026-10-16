@@ -1,59 +1,72 @@
 ---
 # code: language=ansible
 
+- name: Validate base component selection
+  ansible.builtin.assert:
+    that: base_components | difference(['udev-media-automount', 'pipewire', 'dnsmasq', 'reflector']) | length == 0
+    fail_msg: Unsupported base component selection
+  tags: always
+
 - name: Disable IPv6
-  ansible.builtin.import_tasks: 07-disable_ipv6.yml
+  ansible.builtin.import_tasks: ipv6/present.yml
   tags: ipv6
 
 - name: Enable ansible-pull
-  ansible.builtin.import_tasks: 01-ansible_pull.yml
+  ansible.builtin.import_tasks: ansible_pull/present.yml
   tags: ansible-pull
 
 - name: Configure normal user
-  ansible.builtin.import_tasks: 02-configure_user.yml
+  ansible.builtin.import_tasks: user/present.yml
   tags: user
 
+- name: Resolve managed user identity
+  ansible.builtin.include_role:
+    name: user_identity
+    apply:
+      tags: always
+  tags: always
+
 - name: Configure udev-media-automount
-  ansible.builtin.import_tasks: 03-udev-media-automount.yml
+  ansible.builtin.import_tasks: automount/present.yml
   when: "'udev-media-automount' in base_components"
   tags: udev-media-automount
 
 # Always clean up the legacy user automounter during migration.
 - name: Remove legacy udiskie
-  ansible.builtin.import_tasks: 03-udiskie_remove.yml
+  ansible.builtin.import_tasks: migrations/udiskie.yml
   tags: [udev-media-automount, udiskie]
 
 - name: Remove udev-media-automount
-  ansible.builtin.import_tasks: 03-udev-media-automount_remove.yml
+  ansible.builtin.import_tasks: automount/absent.yml
   when: "'udev-media-automount' not in base_components"
   tags: udev-media-automount
 
 - name: Configure pipewire
-  ansible.builtin.import_tasks: 04-pipewire.yml
+  ansible.builtin.import_tasks: pipewire/present.yml
   when: "'pipewire' in base_components"
   tags: pipewire
 
 - name: Remove pipewire
-  ansible.builtin.import_tasks: 04-pipewire_remove.yml
+  ansible.builtin.import_tasks: pipewire/absent.yml
   when: "'pipewire' not in base_components"
   tags: pipewire
 
 - name: Configure dnsmasq
-  ansible.builtin.import_tasks: 05-dnsmasq.yml
+  ansible.builtin.import_tasks: dnsmasq/present.yml
   when: "'dnsmasq' in base_components"
   tags: dnsmasq
 
 - name: Remove dnsmasq
-  ansible.builtin.import_tasks: 05-dnsmasq_remove.yml
+  ansible.builtin.import_tasks: dnsmasq/absent.yml
   when: "'dnsmasq' not in base_components"
   tags: dnsmasq
 
 - name: Configure reflector
-  ansible.builtin.import_tasks: 06-reflector.yml
+  ansible.builtin.import_tasks: reflector/present.yml
   when: "'reflector' in base_components"
   tags: reflector
 
 - name: Remove reflector
-  ansible.builtin.import_tasks: 06-reflector_remove.yml
+  ansible.builtin.import_tasks: reflector/absent.yml
   when: "'reflector' not in base_components"
   tags: reflector

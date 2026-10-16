@@ -1,6 +1,13 @@
 ---
 # code: language=ansible
 
+- name: Resolve managed user identity
+  ansible.builtin.include_role:
+    name: user_identity
+    apply:
+      tags: always
+  tags: always
+
 - name: Select GUI components
   ansible.builtin.set_fact:
     gui_selected: "{{ ([desktop] if desktop != 'none' else []) + gui_components }}"

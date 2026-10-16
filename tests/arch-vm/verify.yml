@@ -1,0 +1,18 @@
+---
+- name: Verify removal preserves shared packages and retained data
+  hosts: local
+  become: true
+  tasks:
+    - name: Gather installed packages
+      ansible.builtin.package_facts:
+    - name: Check retained Firefox profile
+      ansible.builtin.stat:
+        path: "{{ managed_user_home }}/.mozilla/retention-sentinel"
+      register: retained_profile
+    - name: Verify selected desktop and shared font survive app removal
+      ansible.builtin.assert:
+        that:
+          - "'i3-wm' in ansible_facts.packages"
+          - "'ttf-hack' in ansible_facts.packages"
+          - "'alacritty' not in ansible_facts.packages"
+          - retained_profile.stat.exists == (expect_profile | default(true) | bool)

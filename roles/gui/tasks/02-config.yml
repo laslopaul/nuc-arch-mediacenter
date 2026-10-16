@@ -1,26 +1,37 @@
 ---
 # code: language=ansible
 
-- name: Copy config files
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "/home/{{ username }}/{{ item | dirname }}/"
+- name: Create selected configuration directories
+  ansible.builtin.file:
+    path: "{{ managed_user_home }}/{{ item }}"
+    state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
-    mode: '0644'
-    directory_mode: '0755'
-  loop: "{{ gui_selected | map('extract', gui_configs) | select('defined') | flatten }}"
+    mode: "0755"
+  loop: "{{ gui_selected | map('extract', gui_configs) | select('defined') | flatten | reject('equalto', '.xinitrc') | list }}"
+
+- name: Copy static config files with their final permissions
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ managed_user_home }}/{{ item.path }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ gui_selected | map('extract', gui_config_files) | select('defined') | flatten }}"
+
+- name: Render selected desktop startup configuration
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ managed_user_home }}/{{ item }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "{{ '0644' if item == '.config/i3/config' else '0755' }}"
+  loop: "{{ ['.config/i3/config', '.xinitrc'] if desktop == 'i3' else ['.config/labwc/autostart'] if desktop == 'labwc' else [] }}"
 
 - name: Copy .bash_profile
   ansible.builtin.template:
     src: .bash_profile.j2
-    dest: "/home/{{ username }}/.bash_profile"
+    dest: "{{ managed_user_home }}/.bash_profile"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: '0644'
-
-- name: Set executable permissions
-  ansible.builtin.file:
-    path: "/home/{{ username }}/{{ item }}"
-    mode: '0755'
-  loop: "{{ configs_exec[desktop] | default([]) }}"

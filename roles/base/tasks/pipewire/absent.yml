@@ -8,7 +8,7 @@
   become: true
   become_user: "{{ username }}"
   environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + username) }}"
+    XDG_RUNTIME_DIR: "/run/user/{{ managed_user_uid }}"
   ansible.builtin.systemd:
     scope: user
     enabled: false
@@ -29,13 +29,9 @@
     enabled: false
   when: "'rtkit' in ansible_facts.packages"
 
-- name: Uninstall PipeWire packages not required by others
-  ansible.builtin.shell: |
-    for pkg in wireplumber pipewire-pulse pipewire-alsa pipewire alsa-utils rtkit; do
-      if pacman -Qqt "$pkg" >/dev/null 2>&1; then
-        pacman -R --noconfirm "$pkg" && echo "removed $pkg"
-      fi
-    done
-  register: pipewire_purge
-  changed_when: "'removed' in pipewire_purge.stdout"
+- name: Remove unused component packages
+  ansible.builtin.import_role:
+    name: package_cleanup
+  vars:
+    package_cleanup_candidates: ['wireplumber', 'pipewire-pulse', 'pipewire-alsa', 'pipewire', 'alsa-utils', 'rtkit']
   when: base_purge_packages | bool

@@ -1,0 +1,26 @@
+---
+- name: Validate package cleanup arguments
+  ansible.builtin.assert:
+    that:
+      - package_cleanup_candidates is defined
+      - package_cleanup_candidates is sequence
+      - package_cleanup_candidates is not string
+      - package_cleanup_protected | default([]) is sequence
+      - package_cleanup_protected | default([]) is not string
+
+- name: Remove nominated packages that have no reverse dependencies
+  ansible.builtin.script:
+    cmd: >-
+      {{ role_path }}/files/prune-packages.sh
+      {{ 'check' if ansible_check_mode else 'apply' }}
+      {% for package in package_cleanup_protected | default([]) %}
+      --protect {{ package | quote }}
+      {% endfor %}
+      {% for package in package_cleanup_candidates | unique %}
+      --candidate {{ package | quote }}
+      {% endfor %}
+    executable: /bin/bash
+  check_mode: false
+  register: package_cleanup_result
+  changed_when: "'removed ' in package_cleanup_result.stdout or 'would remove ' in package_cleanup_result.stdout"
+  when: package_cleanup_candidates | length > 0

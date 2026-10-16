@@ -1,71 +1,37 @@
-name: Ansible Lint
+name: Ansible checks
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
     paths:
-      - '**/roles/**'
-      - '**/tasks/**'
-      - '**/handlers/**'
-      - '**/playbooks/**'
-      - '**/group_vars/**'
-      - '**/host_vars/**'
-      - '**/*.yml'
-      - '**/*.yaml'
-      - 'ansible.cfg'
+      - 'roles/**'
+      - 'tasks/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'group_vars/**'
+      - 'inventory/**'
+      - '*.yml'
+      - '*.cfg'
+      - 'requirements*.txt'
       - '.ansible-lint'
-      - '.config/ansible-lint.yml'
+      - '.github/workflows/ansible-lint.yml'
+  workflow_dispatch:
 
 jobs:
-  changed-files:
-    name: Detect changed files
+  check:
     runs-on: ubuntu-latest
-    outputs:
-      any-ansible-changes: ${{ steps.filter.outputs.any_changed }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Get changed files
-        id: filter
-        uses: dorny/paths-filter@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          filters: |
-            any_changed:
-              - '**/roles/**'
-              - '**/tasks/**'
-              - '**/handlers/**'
-              - '**/playbooks/**'
-              - '**/group_vars/**'
-              - '**/host_vars/**'
-              - '**/*.yml'
-              - '**/*.yaml'
-              - 'ansible.cfg'
-              - '.ansible-lint'
-              - '.config/ansible-lint.yml'
-
-  lint:
-    name: Run ansible-lint
-    needs: changed-files
-    if: needs.changed-files.outputs.any-ansible-changes == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: 3.14
-
-      - name: Install ansible-lint
+          python-version: '3.13'
+      - name: Install shared environment
+        run: bash scripts/bootstrap.sh
+      - name: Lint and syntax checks
         run: |
-          pip install ansible ansible-lint
-      
-      - name: Run ansible-lint
+          .venv/bin/ansible-lint
+          .venv/bin/ansible-playbook local.yml --syntax-check
+          .venv/bin/ansible-playbook purge.yml --syntax-check
+      - name: Behavior and Compose checks
         run: |
-          ansible-lint
+          export PATH="$PWD/.venv/bin:$PATH"
+          python -m unittest discover -s tests -v

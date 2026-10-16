@@ -17,9 +17,6 @@ gui_components:
 # Packages still required by something else, or by a selected
 # desktop / app, are kept.
 gui_purge_packages: false
-# Also delete user data (Kodi library & addons, Firefox profile)
-# of removed apps. Can't be undone.
-gui_purge_userdata: false
 
 # packages of each desktop & app
 gui_packages:
@@ -59,9 +56,13 @@ gui_userdata:
     - .mozilla
     - .cache/mozilla
 
-configs_exec:
+# Static files have their final mode on the initial copy.
+gui_config_files:
   i3:
-    - .config/i3/i3-restart.sh
-    - .xinitrc
+    - {path: .config/i3/i3-restart.sh, mode: "0755"}
   labwc:
-    - .config/labwc/autostart
+    - {path: .config/labwc/environment, mode: "0644"}
+    - {path: .config/labwc/menu.xml, mode: "0644"}
+    - {path: .config/labwc/rc.xml, mode: "0644"}
+  alacritty:
+    - {path: .config/alacritty/alacritty.toml, mode: "0644"}

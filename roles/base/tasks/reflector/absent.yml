@@ -16,11 +16,9 @@
     path: /etc/xdg/reflector/reflector.conf
     state: absent
 
-- name: Uninstall reflector if not required by others
-  ansible.builtin.shell: |
-    if pacman -Qqt reflector >/dev/null 2>&1; then
-      pacman -R --noconfirm reflector && echo "removed reflector"
-    fi
-  register: reflector_purge
-  changed_when: "'removed' in reflector_purge.stdout"
+- name: Remove unused component packages
+  ansible.builtin.import_role:
+    name: package_cleanup
+  vars:
+    package_cleanup_candidates: ['reflector']
   when: base_purge_packages | bool

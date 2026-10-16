@@ -8,16 +8,27 @@ set $ws3 "3: Terminal"
 
 # === Workspace Rules (Applied FIRST) ===
 assign [class="Kodi"] $ws1
+{% if 'firefox' in gui_components %}
 assign [class="firefox"] $ws2
+{% endif %}
+{% if 'alacritty' in gui_components %}
 assign [class="Alacritty"] $ws3
+{% endif %}
 for_window [class="Kodi"] fullscreen enable
+{% if 'firefox' in gui_components %}
 for_window [class="firefox"] fullscreen enable
+{% endif %}
 
 # === Startup Apps (With Delays) ===
-exec --no-startup-id "udiskie --tray"
+{% if 'alacritty' in gui_components %}
 exec --no-startup-id "sleep 3 && alacritty"
+{% endif %}
+{% if 'firefox' in gui_components %}
 exec --no-startup-id "sleep 3 && firefox"
+{% endif %}
+{% if 'kodi' in gui_components %}
 exec --no-startup-id "kodi"
+{% endif %}
 
 # === Keybindings ===
 set $mod Mod4

@@ -1,0 +1,31 @@
+---
+- name: Explicitly purge data of disabled components
+  hosts: local
+  become: true
+  vars:
+    purge_gui_targets: []
+    purge_docker_targets: []
+    purge_docker_engine_data: false
+    docker_selected: "{{ docker_services if docker_enabled | bool else [] }}"
+    gui_selected: "{{ ([desktop] if desktop != 'none' else []) + gui_components }}"
+  pre_tasks:
+    - name: Require supported, disabled purge targets
+      ansible.builtin.assert:
+        that:
+          - purge_gui_targets | difference(gui_userdata | list) | length == 0
+          - purge_gui_targets | intersect(gui_selected) | length == 0
+          - purge_docker_targets | difference(docker_service_catalog | list) | length == 0
+          - purge_docker_targets | intersect(docker_selected) | length == 0
+          - not purge_docker_engine_data | bool or not docker_enabled | bool
+          - not purge_docker_engine_data | bool or docker_service_order | difference(purge_docker_targets) | length == 0
+        fail_msg: Disable targets with local.yml before purging; full engine purge requires all Docker targets.
+  tasks:
+    - name: Purge selected GUI data
+      ansible.builtin.import_role:
+        name: gui
+        tasks_from: purge
+
+    - name: Purge selected Docker data
+      ansible.builtin.import_role:
+        name: docker
+        tasks_from: purge

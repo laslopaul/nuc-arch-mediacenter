@@ -1,0 +1,26 @@
+---
+- name: Check Docker socket before purging
+  ansible.builtin.stat:
+    path: /var/run/docker.sock
+  register: purge_docker_socket
+
+- name: Require stopped Docker before deleting engine storage
+  ansible.builtin.assert:
+    that: not purge_docker_socket.stat.exists
+    fail_msg: Apply local.yml with docker_enabled=false before purging engine storage.
+  when: purge_docker_engine_data | bool
+
+- name: Purge explicitly selected Docker service data
+  ansible.builtin.include_tasks: "{{ role_path }}/tasks/purge_service.yml"
+  loop: "{{ docker_service_order | reverse | select('in', purge_docker_targets) | list }}"
+  loop_control:
+    loop_var: purge_service
+
+- name: Delete all Docker engine data when explicitly requested
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ docker_path }}"
+    - /var/lib/docker
+  when: purge_docker_engine_data | bool

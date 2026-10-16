@@ -2,30 +2,31 @@
 # code: language=ansible
 
 # Generic deployment of a Docker Compose service.
-# Requires docker_service: service name from docker_service_dirs,
+# Requires docker_service: service name from docker_service_catalog,
 # with a <service>-compose.yml.j2 template.
 
 - name: "Add folders for {{ docker_service }}"
   vars:
-    service_dir: "{{ docker_path }}/{{ docker_service_dirs[docker_service] }}"
+    service_dir: "{{ docker_path }}/{{ docker_service_catalog[docker_service].directory }}"
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: "0755"
-  loop: "{{ [service_dir] + docker_service_subdirs.get(docker_service, []) | map('regex_replace', '^', service_dir ~ '/') | list }}"
+  loop: "{{ [service_dir] + docker_service_catalog[docker_service].subdirectories | map('regex_replace', '^', service_dir ~ '/') | list }}"
 
 - name: "Create Docker Compose file for {{ docker_service }}"
   ansible.builtin.template:
-    src: "{{ docker_service }}-compose.yml.j2"
-    dest: "{{ docker_path }}/{{ docker_service_dirs[docker_service] }}/docker-compose.yml"
+    src: "{{ docker_service_catalog[docker_service].template }}"
+    dest: "{{ docker_path }}/{{ docker_service_catalog[docker_service].directory }}/docker-compose.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: "0644"
 
 - name: "Launch {{ docker_service }}"
   community.docker.docker_compose_v2:
-    project_src: "{{ docker_path }}/{{ docker_service_dirs[docker_service] }}"
+    project_src: "{{ docker_path }}/{{ docker_service_catalog[docker_service].directory }}"
+    project_name: "{{ docker_service_catalog[docker_service].project }}"
     recreate: auto
     remove_orphans: false

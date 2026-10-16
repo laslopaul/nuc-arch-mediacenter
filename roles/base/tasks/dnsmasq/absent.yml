@@ -16,11 +16,9 @@
     path: /etc/dnsmasq.conf
     state: absent
 
-- name: Uninstall dnsmasq if not required by others
-  ansible.builtin.shell: |
-    if pacman -Qqt dnsmasq >/dev/null 2>&1; then
-      pacman -R --noconfirm dnsmasq && echo "removed dnsmasq"
-    fi
-  register: dnsmasq_purge
-  changed_when: "'removed' in dnsmasq_purge.stdout"
+- name: Remove unused component packages
+  ansible.builtin.import_role:
+    name: package_cleanup
+  vars:
+    package_cleanup_candidates: ['dnsmasq']
   when: base_purge_packages | bool

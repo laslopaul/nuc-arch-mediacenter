@@ -1,6 +1,16 @@
 ---
 # code: language=ansible
 
+- name: Check pinned Ansible runtime
+  ansible.builtin.stat:
+    path: "{{ ansible_runtime_path }}/bin/ansible-pull"
+  register: base_ansible_runtime
+
+- name: Require runtime bootstrap before enabling automatic configuration
+  ansible.builtin.assert:
+    that: base_ansible_runtime.stat.exists
+    fail_msg: "Run bash scripts/bootstrap.sh {{ ansible_runtime_path }} before applying local.yml."
+
 - name: Copy ansible-pull timer to systemd folder
   ansible.builtin.copy:
     src: ansible-pull.timer

@@ -1,0 +1,12 @@
+---
+- name: Deploy Compose service
+  ansible.builtin.include_tasks: service.yml
+  when: docker_service != 'traefik'
+
+- name: Configure Step CA trust
+  ansible.builtin.include_tasks: step-ca.yml
+  when: docker_service == 'step-ca'
+
+- name: Configure and deploy Traefik
+  ansible.builtin.include_tasks: traefik.yml
+  when: docker_service == 'traefik'

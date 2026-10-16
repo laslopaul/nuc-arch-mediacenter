@@ -1,0 +1,18 @@
+---
+- name: Validate Docker selection and deployment order
+  ansible.builtin.assert:
+    that:
+      - docker_services | difference(docker_service_catalog | list) | length == 0
+      - docker_service_order | difference(docker_service_catalog | list) | length == 0
+      - docker_service_catalog | list | difference(docker_service_order) | length == 0
+      - docker_service_order | unique | length == docker_service_order | length
+    fail_msg: Unsupported Docker service selection or invalid deployment order
+
+- name: Check Docker service dependencies and order
+  ansible.builtin.assert:
+    that:
+      - docker_service_catalog[item].requires | difference(docker_selected) | length == 0
+      - docker_service_catalog[item].requires | difference(docker_service_order[:docker_service_order.index(item)]) | length == 0
+    fail_msg: "{{ item }} requires {{ docker_service_catalog[item].requires | join(', ') }} before it"
+    quiet: true
+  loop: "{{ docker_selected }}"

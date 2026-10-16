@@ -1,5 +1,10 @@
 ---
-# code: language=ansible
+- name: Resolve managed user identity
+  ansible.builtin.include_role:
+    name: user_identity
+    apply:
+      tags: always
+  tags: always
 
 - name: Select Docker services
   ansible.builtin.set_fact:
@@ -7,17 +12,7 @@
   tags: always
 
 - name: Validate Docker services
-  ansible.builtin.assert:
-    that: docker_services | difference(docker_service_dirs | list) | length == 0
-    fail_msg: "Unsupported services in docker_services: {{ docker_services | difference(docker_service_dirs | list) }}"
-  tags: always
-
-- name: Check Docker service dependencies
-  ansible.builtin.assert:
-    that: docker_service_requires.get(item, []) | difference(docker_selected) | length == 0
-    fail_msg: "{{ item }} requires {{ docker_service_requires.get(item, []) | join(', ') }} in docker_services"
-    quiet: true
-  loop: "{{ docker_selected }}"
+  ansible.builtin.import_tasks: validate.yml
   tags: always
 
 - name: Install Docker
@@ -25,57 +20,16 @@
   when: docker_enabled | bool
   tags: docker-install
 
-- name: Install Step CA
-  ansible.builtin.import_tasks: service.yml
-  vars:
-    docker_service: step-ca
-  when: "'step-ca' in docker_selected"
-  tags: step-ca
-
-- name: Install step-cli & trust Step CA
-  ansible.builtin.import_tasks: step-ca.yml
-  when: "'step-ca' in docker_selected"
-  tags: step-ca
-
-- name: Install Traefik
-  ansible.builtin.import_tasks: traefik.yml
-  when: "'traefik' in docker_selected"
-  tags: traefik
-
-- name: Install qbittorrent
-  ansible.builtin.import_tasks: service.yml
-  vars:
-    docker_service: qbittorrent
-  when: "'qbittorrent' in docker_selected"
-  tags: qb
-
-- name: Install Vaultwarden
-  ansible.builtin.import_tasks: service.yml
-  vars:
-    docker_service: vaultwarden
-  when: "'vaultwarden' in docker_selected"
-  tags: vw
-
-- name: Install Plex
-  ansible.builtin.import_tasks: service.yml
-  vars:
-    docker_service: plex
-  when: "'plex' in docker_selected"
-  tags: plex
-
-- name: Install Immich
-  ansible.builtin.import_tasks: service.yml
-  vars:
-    docker_service: immich
-  when: "'immich' in docker_selected"
-  tags: immich
-
-- name: Install Syncthing
-  ansible.builtin.import_tasks: service.yml
-  vars:
-    docker_service: syncthing
-  when: "'syncthing' in docker_selected"
-  tags: syncthing
+# Always visit the includes so --tags qb / vw etc. reach their children.
+- name: Deploy selected Docker services in order
+  ansible.builtin.include_tasks:
+    file: deploy.yml
+    apply:
+      tags: "{{ docker_service_catalog[docker_service].tag }}"
+  loop: "{{ docker_service_order | select('in', docker_selected) | list }}"
+  loop_control:
+    loop_var: docker_service
+  tags: always
 
 - name: Remove unselected Docker services
   ansible.builtin.import_tasks: remove.yml

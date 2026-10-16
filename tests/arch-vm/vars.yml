@@ -1,0 +1,11 @@
+---
+username: ansible-refactor-test
+managed_user_home: /home/ansible-refactor-test
+media_path: /home/ansible-refactor-test/Library
+pki_path: /home/ansible-refactor-test/pki
+desktop: i3
+gui_components: []
+gui_purge_packages: true
+base_components: []
+docker_enabled: false
+docker_services: []

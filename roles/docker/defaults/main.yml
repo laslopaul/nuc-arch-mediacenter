@@ -1,7 +1,7 @@
 ---
 # code: language=ansible
 
-docker_path: "/home/{{ username }}/docker"
+docker_path: "{{ managed_user_home }}/docker"
 
 timezone: "Europe/Minsk"
 
@@ -26,39 +26,68 @@ docker_purge_images: true
 # itself when docker_enabled is false). Packages still required by
 # something else are kept.
 docker_purge_packages: true
-# Also delete data of removed services: their whole folder under
-# docker_path (config, databases, Vaultwarden vault, Immich photos,
-# .env files) and their named volumes. When docker_enabled is false,
-# docker_path and /var/lib/docker are deleted too. Can't be undone.
-docker_purge_data: false
 
-# folder of each service under docker_path, in deployment order
-# (services are removed in reverse order)
-docker_service_dirs:
-  step-ca: step
-  traefik: traefik
-  qbittorrent: qb
-  vaultwarden: vw
-  plex: plex
-  immich: immich
-  syncthing: syncthing
+# Deployment order is explicit; removal uses its reverse.
+docker_service_order: [step-ca, traefik, qbittorrent, vaultwarden, plex, immich, syncthing]
+docker_service_catalog:
+  step-ca:
+    directory: step
+    project: step
+    volumes: []
+    subdirectories: [data]
+    requires: []
+    template: step-ca-compose.yml.j2
+    tag: step-ca
+  traefik:
+    directory: traefik
+    project: traefik
+    volumes: []
+    subdirectories: [ssl, dynamic, letsencrypt]
+    requires: [step-ca]
+    template: traefik-compose.yml.j2
+    tag: traefik
+  qbittorrent:
+    directory: qb
+    project: qb
+    volumes: []
+    subdirectories: [config]
+    requires: [traefik]
+    template: qbittorrent-compose.yml.j2
+    tag: qb
+  vaultwarden:
+    directory: vw
+    project: vw
+    volumes: []
+    subdirectories: [data]
+    requires: [traefik]
+    template: vaultwarden-compose.yml.j2
+    tag: vw
+  plex:
+    directory: plex
+    project: plex
+    volumes: []
+    subdirectories: [config]
+    requires: []
+    template: plex-compose.yml.j2
+    tag: plex
+  immich:
+    directory: immich
+    project: immich
+    volumes: [immich_model-cache]
+    subdirectories: [data, postgres]
+    requires: [traefik]
+    template: immich-compose.yml.j2
+    tag: immich
+  syncthing:
+    directory: syncthing
+    project: syncthing
+    volumes: []
+    subdirectories: [config, data, data/share1]
+    requires: [traefik]
+    template: syncthing-compose.yml.j2
+    tag: syncthing
 
-# subfolders each service needs inside its folder
-docker_service_subdirs:
-  step-ca: [data]
-  qbittorrent: [config]
-  vaultwarden: [data]
-  plex: [config]
-  immich: [data, postgres]
-  syncthing: [config, data, data/share1]
-
-# services each service needs to be deployed
-docker_service_requires:
-  traefik: [step-ca]
-  qbittorrent: [traefik]
-  vaultwarden: [traefik]
-  immich: [traefik]
-  syncthing: [traefik]
+docker_step_ca_fingerprint: cb8e704102547f8a85f656a6419a5c7c3ae93a7ef5eda3bb1504f6a31acd8a9c
 
 images:
   traefik: "traefik:v3.7.14"

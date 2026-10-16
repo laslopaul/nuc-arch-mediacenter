@@ -61,11 +61,6 @@
     mode: '0644'
   loop: [auto, hfsplus]
 
-- name: Look up automount user
-  ansible.builtin.getent:
-    database: passwd
-    key: "{{ username }}"
-
 - name: Configure user access to FAT, exFAT and NTFS media
   ansible.builtin.template:
     src: media-automount-filesystem.j2

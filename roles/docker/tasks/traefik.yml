@@ -3,26 +3,40 @@
 
 - name: Add folders for Traefik files
   ansible.builtin.file:
-    path: "{{ docker_path }}/{{ item }}"
+    path: "{{ item }}"
     state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: "0755"
-  loop:
-    - traefik
-    - traefik/ssl
-    - traefik/dynamic
-    - traefik/letsencrypt
+  vars:
+    service_dir: "{{ docker_path }}/{{ docker_service_catalog.traefik.directory }}"
+  loop: "{{ [service_dir] + docker_service_catalog.traefik.subdirectories | map('regex_replace', '^', service_dir ~ '/') | list }}"
+
+- name: Set provisioner password permissions for the issuing user
+  ansible.builtin.file:
+    path: "{{ pki_path }}/admin.txt"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0600"
 
 - name: Generate TLS cert for traefik
+  become: true
+  become_user: "{{ username }}"
+  environment:
+    STEPPATH: "{{ pki_path }}/step"
   ansible.builtin.command:
-    chdir: "{{ docker_path }}/traefik/ssl"
+    chdir: "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/ssl"
     cmd: >
-      step ca certificate "*.{{ domain }}" cert.crt cert.key --password-file=/home/{{ username }}/pki/admin.txt --provisioner admin
-    creates: "{{ item  }}"
-  loop:
-    - "{{ docker_path }}/traefik/ssl/cert.crt"
-    - "{{ docker_path }}/traefik/ssl/cert.key"
+      step ca certificate "*.{{ domain }}" cert.crt cert.key --password-file={{ pki_path }}/admin.txt --provisioner admin
+    creates: "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/ssl/cert.crt"
+
+- name: Ensure certificate and private key belong to the renewal user
+  ansible.builtin.file:
+    path: "{{ docker_path }}/{{ docker_service_catalog.traefik.directory }}/ssl/{{ item }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "{{ '0600' if item == 'cert.key' else '0644' }}"
+  loop: [cert.crt, cert.key]
 
 - name: Copy traefik-cert-renewer.service to systemd folder
   ansible.builtin.template:
@@ -31,6 +45,7 @@
     owner: root
     group: root
     mode: "0644"
+  notify: Restart Traefik certificate renewer
 
 - name: Enable traefik-cert-renewer.service
   ansible.builtin.systemd:
@@ -42,7 +57,7 @@
 - name: Copy Traefik static config
   ansible.builtin.copy:
     src: traefik/traefik.yml
-    dest: "{{ docker_path }}/traefik/traefik.yml"
+    dest: "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/traefik.yml"
     mode: "0644"
   register: traefik_static_config
 
@@ -50,7 +65,7 @@
 - name: Copy Traefik TLS config
   ansible.builtin.copy:
     src: traefik/dynamic/tls.yml
-    dest: "{{ docker_path }}/traefik/dynamic/tls.yml"
+    dest: "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/dynamic/tls.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: "0644"
@@ -58,22 +73,23 @@
 - name: Create Traefik route for the Let's Encrypt wildcard cert
   ansible.builtin.template:
     src: traefik-acme.yml.j2
-    dest: "{{ docker_path }}/traefik/dynamic/acme.yml"
+    dest: "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/dynamic/acme.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: "0644"
 
 - name: Create Docker Compose file
   ansible.builtin.template:
-    src: traefik-compose.yml.j2
-    dest: "{{ docker_path }}/traefik/docker-compose.yml"
+    src: "{{ docker_service_catalog.traefik.template }}"
+    dest: "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/docker-compose.yml"
     owner: "{{ username }}"
     group: "{{ username }}"
     mode: "0644"
 
 - name: Launch Traefik service
   community.docker.docker_compose_v2:
-    project_src: "{{ docker_path }}/traefik"
+    project_src: "{{ docker_path }}/{{ docker_service_catalog.traefik.directory }}"
+    project_name: "{{ docker_service_catalog.traefik.project }}"
     # Static config is only read on startup
     recreate: "{{ 'always' if traefik_static_config.changed else 'auto' }}"
     remove_orphans: false

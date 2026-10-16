@@ -16,10 +16,47 @@
     dest: /usr/local/bin/step
     state: link
 
-- name: Install CA to the system trust store
-  vars:
-    fingerprint: cb8e704102547f8a85f656a6419a5c7c3ae93a7ef5eda3bb1504f6a31acd8a9c
+- name: Create managed PKI directory
+  ansible.builtin.file:
+    path: "{{ pki_path }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0700"
+
+- name: Wait for Step CA to accept connections
+  ansible.builtin.wait_for:
+    host: "{{ domain }}"
+    port: 9000
+    timeout: 60
+  when: not ansible_check_mode
+
+- name: Bootstrap Step CA for the managed user
+  become: true
+  become_user: "{{ username }}"
+  environment:
+    STEPPATH: "{{ pki_path }}/step"
   ansible.builtin.command:
-    cmd: >
-      step ca bootstrap --ca-url https://{{ domain }}:9000 --fingerprint {{ fingerprint }} --install
-    creates: "/home/{{ username }}/.step//certs/root_ca.crt"
+    argv:
+      - step
+      - ca
+      - bootstrap
+      - --ca-url
+      - "https://{{ domain }}:9000"
+      - --fingerprint
+      - "{{ docker_step_ca_fingerprint }}"
+    creates: "{{ pki_path }}/step/certs/root_ca.crt"
+  register: docker_step_bootstrap
+  retries: 5
+  delay: 3
+  until: docker_step_bootstrap is succeeded
+
+- name: Install CA certificate in the system trust store
+  ansible.builtin.copy:
+    src: "{{ pki_path }}/step/certs/root_ca.crt"
+    dest: /etc/ca-certificates/trust-source/anchors/nuc-step-ca.crt
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Update CA trust

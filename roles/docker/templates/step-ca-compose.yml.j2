@@ -9,4 +9,4 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - "{{ docker_path }}/step/data:/home/step"
+      - "{{ docker_path }}/{{ docker_service_catalog['step-ca'].directory }}/data:/home/step"

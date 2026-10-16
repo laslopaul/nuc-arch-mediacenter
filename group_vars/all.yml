@@ -2,6 +2,10 @@
 # code: language=ansible
 
 username: kodi
+managed_user_home: "/home/{{ username }}"
+media_path: "{{ managed_user_home }}/Library"
+pki_path: "{{ managed_user_home }}/pki"
+ansible_runtime_path: /opt/nuc-ansible
 domain: nuc-server.lan
 public_domain: laslopaul.dev
 zerotier_ip: "172.27.100.100"
@@ -13,8 +17,7 @@ base_components:
   - reflector
 base_purge_packages: true
 
-# gui role: GUI disabled, packages & user data removed
+# gui role: GUI disabled and packages removed; user data retained
 desktop: none
 gui_components: []
 gui_purge_packages: true
-gui_purge_userdata: true

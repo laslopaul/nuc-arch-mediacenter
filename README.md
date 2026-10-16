@@ -45,12 +45,17 @@ The script installs the base system with LVM, GRUB (UEFI), systemd-networkd with
 
 ## Apply configuration
 
-After booting into the new system, as root, pass the password for the `kodi` user in `KODI_PASSWORD` and run `ansible-pull` once:
+After booting into the new system, as root, clone the repository and bootstrap the pinned Ansible environment. The installer provides `uv`; bootstrap uses it to install Python 3.13. On a development machine, an existing `python3.13` also works.
 
 ```bash
+git clone https://github.com/laslopaul/nuc-arch-mediacenter /root/nuc-arch-mediacenter
+cd /root/nuc-arch-mediacenter
+bash scripts/bootstrap.sh /opt/nuc-ansible
 export KODI_PASSWORD="mypassword"
-ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter
+/opt/nuc-ansible/bin/ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter
 ```
+
+**Existing installations:** install `uv` if neither `uv` nor `python3.13` is available, then run the bootstrap command before deploying this refactor. The timer now uses `/opt/nuc-ansible/bin/ansible-pull`. The playbook checks that runtime exists before changing the timer. Re-run bootstrap when either requirements file changes; dependency upgrades are explicit rather than performed by the ten-minute timer.
 
 The first run installs the `ansible-pull` timer. From then on the configuration is re-applied every 10 minutes, so changes pushed to this repo reach the machine automatically.
 
@@ -65,10 +70,10 @@ SPACESHIP_API_SECRET=...
 
 ### Running only part of the configuration
 
-Every role and task file has a tag:
+Roles and components retain their existing tags, including `qb` and `vw`:
 
 ```bash
-ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter --tags gui
+/opt/nuc-ansible/bin/ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter --tags gui
 ```
 
 | Role | Tags |
@@ -86,6 +91,10 @@ Shared variables are in [group_vars/all.yml](group_vars/all.yml):
 | `username` | `kodi` | Main user |
 | `domain` | `nuc-server.lan` | Domain for the services |
 | `public_domain` | `laslopaul.dev` | Public domain with a Let's Encrypt wildcard certificate |
+| `managed_user_home` | `/home/{{ username }}` | Managed account home |
+| `media_path` | `{{ managed_user_home }}/Library` | Shared media location |
+| `pki_path` | `{{ managed_user_home }}/pki` | Step CA client state and provisioner password |
+| `ansible_runtime_path` | `/opt/nuc-ansible` | Pinned Ansible virtual environment |
 | `zerotier_ip` | `172.27.100.100` | Server's Zerotier IP; dnsmasq listens on it |
 
 Role defaults, which can be overridden in `group_vars/all.yml`:
@@ -144,18 +153,11 @@ gui_components:
   - firefox
   - alacritty
 gui_purge_packages: true
-gui_purge_userdata: true
 ```
 
-The desktop not selected and any app left out of `gui_components` are removed completely:
+The desktop not selected and any app left out of `gui_components` have their managed configuration removed. With `gui_purge_packages: true`, packages are uninstalled only when no remaining package requires them, and packages belonging to selected components are explicitly protected.
 
-- their config is deleted
-- their packages are uninstalled, except those still required by another package or by a selected desktop or app (`gui_purge_packages`)
-- their user data is deleted: `~/.kodi` (Kodi library & addons) and `~/.mozilla` (Firefox profile) (`gui_purge_userdata`). **This can't be undone**, and since `ansible-pull` runs every 10 minutes, it happens shortly after the change is pushed.
-
-With the default `desktop: labwc`, this also means the i3 config and the i3/Xorg packages are removed if they were installed.
-
-Set `gui_purge_packages: false` to keep packages installed, and `gui_purge_userdata: false` to keep user data, so an app can be brought back with its library and profile intact.
+User data such as `~/.kodi` and `~/.mozilla` is always retained by normal reconciliation. Use [purge.yml](purge.yml) to delete it explicitly. The old `gui_purge_userdata` setting is no longer used.
 
 To remove the GUI completely:
 
@@ -164,7 +166,7 @@ desktop: none
 gui_components: []
 ```
 
-The desktop autostart configs launch Firefox and Alacritty. If you remove those apps but keep a desktop, the desktop fails to start them on login.
+Desktop startup templates launch only selected apps. PipeWire setup in startup scripts is conditional on the base component being selected; the legacy udiskie startup commands have been removed.
 
 ### Selecting Docker services
 
@@ -180,7 +182,6 @@ docker_services:
   - syncthing
 docker_purge_images: true
 docker_purge_packages: true
-docker_purge_data: false
 ```
 
 A service left out of `docker_services` is stopped, its containers are removed with `docker compose down`, and its compose file is deleted. On top of that:
@@ -188,20 +189,69 @@ A service left out of `docker_services` is stopped, its containers are removed w
 - its images are deleted (`docker_purge_images`)
 - removing `step-ca` also removes the `step` symlink, and uninstalls `step-cli` (`docker_purge_packages`)
 - removing `traefik` also stops and removes `traefik-cert-renewer.service`
-- with `docker_purge_data: true`, its whole folder under `~/docker` and its named volumes are deleted. That includes its config, databases, `.env` secrets, the **Vaultwarden vault** and the **Immich photo library**, and for `step-ca` the CA keys (its root certificate is also removed from the system trust store). **This can't be undone**, which is why it's off by default. Media in `~/Library` (used by Plex and qBittorrent) is never touched.
+Service directories, secrets, databases, media libraries, named volumes and CA trust are retained. Data deletion is handled only by [purge.yml](purge.yml); the old `docker_purge_data` setting is no longer used.
 
 Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Immich and Syncthing need `traefik`, and `traefik` needs `step-ca`. Removal runs in reverse order (apps, then Traefik, then Step CA).
 
 To add a service with a plain Docker Compose deployment:
 
 1. Add `roles/docker/templates/<service>-compose.yml.j2`.
-2. In [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml), add the service to `docker_services`, `docker_service_dirs` and `images`. Add it to `docker_service_subdirs` if it needs subfolders, and to `docker_service_requires` if it runs behind Traefik.
-3. Add an `import_tasks: service.yml` entry with `docker_service: <service>` to [roles/docker/tasks/main.yml](roles/docker/tasks/main.yml).
+2. Add its directory, Compose project name, named volumes, subdirectories, dependencies, template and tag to `docker_service_catalog` in [Docker defaults](roles/docker/defaults/main.yml). Named volumes must be listed explicitly for targeted purging.
+3. Add it to `docker_service_order` after its dependencies, and to `docker_services` when it should be enabled. Add image references to `images` for Renovate.
 
-To remove Docker completely, set `docker_enabled: false`. All services are removed as above, the Docker service and `docker-cleanup.timer` are stopped and disabled, and with `docker_purge_packages` the Docker packages are uninstalled. With `docker_purge_data: true`, `~/docker` and `/var/lib/docker` (all images, containers and volumes, including ones not managed by this repo) are deleted too.
+Deployment follows `docker_service_order`; removal reverses that order. Step CA and Traefik keep their specialized setup tasks. Selection and dependency checks run before Docker changes.
+
+To remove Docker, set `docker_enabled: false`. Reconciliation stops the managed services, disables Docker and its cleanup timer, and optionally removes its packages. All retained data survives.
+
+## Explicit data purging
+
+First disable the target in configuration and apply `local.yml`. Then run the purge playbook with exact targets:
+
+```bash
+/opt/nuc-ansible/bin/ansible-playbook purge.yml -e '{"purge_gui_targets": ["kodi", "firefox"]}'
+/opt/nuc-ansible/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["immich"]}'
+```
+
+Purging permanently deletes the selected app profiles or service directory, including its databases, `.env` secrets and CA keys where applicable. Named volumes are removed by explicit catalog names, even after reconciliation has deleted the Compose file. A service with named volumes needs a running Docker daemon for targeted purging; keep `docker_enabled: true` while disabling that service. Existing containers for the selected Compose project must already be removed.
+
+To delete **all** Docker engine storage, including unmanaged containers, images and volumes, first apply `docker_enabled: false`, then explicitly select every service and engine storage:
+
+```bash
+/opt/nuc-ansible/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["step-ca", "traefik", "qbittorrent", "vaultwarden", "plex", "immich", "syncthing"], "purge_docker_engine_data": true}'
+```
+
+No targets are selected by default. Enabled components cannot be purged. Purging does not delete `media_path`. Inspect planned deletions with `--check --diff` before running the command without check mode.
+
+## Development and validation
+
+```bash
+bash scripts/bootstrap.sh
+export PATH="$PWD/.venv/bin:$PATH"
+ansible-lint --offline
+ansible-playbook local.yml --syntax-check
+ansible-playbook purge.yml --syntax-check
+python -m unittest discover -s tests -v
+```
+
+The shared environment pins Python tooling and collections. Compose tests need the Docker CLI with Compose, but no daemon; they render all service templates with fixture secrets and validate the results using `docker compose config`. Other checks cover dependency validation, desktop startup selection, cleanup failure propagation, check mode, and shared-package preservation.
+
+For lifecycle and idempotence checks on a **disposable Arch Linux VM**, prepare a Python 3.13 interpreter on the VM (for example with `uv venv --python 3.13 /opt/nuc-ansible`), and provide an SSH inventory with the VM in `[local]` (do not use the production inventory):
+
+```ini
+[local]
+arch-refactor-vm ansible_host=192.0.2.10 ansible_user=root ansible_python_interpreter=/opt/nuc-ansible/bin/python
+```
+
+```bash
+python tests/arch-vm/run.py /path/to/disposable-vm-inventory
+```
+
+The scenario creates `ansible-refactor-test`, installs i3 and Alacritty, verifies unchanged second runs, removes Alacritty while preserving i3's shared font and a Firefox profile sentinel, then exercises explicit profile purging. It leaves test state on the disposable VM. It does not run the base role or change the production user.
+
+Base tasks are organized by component under `roles/base/tasks/<component>/{present,absent}.yml`; legacy cleanup is under `migrations/`. User UID/GID resolution lives in `user_identity`, and package removal is shared through `package_cleanup`. The cleanup helper removes only nominated packages without reverse dependencies, repeats until stable, and never recursively removes unrelated dependencies. In check mode it reports currently removable leaf packages without simulating the entire dependency cascade.
 
 ## Maintenance
 
 - [Renovate](renovate.json) runs daily in GitHub Actions and opens PRs for new versions of the Docker images in [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml) and of GitHub Actions. Minor and patch updates are merged automatically, and `ansible-pull` then deploys them.
-- `ansible-lint` runs on pull requests that change Ansible files.
+- CI runs lint, playbook syntax checks and behavior/Compose validation for changes to Ansible, scripts and tests. The Arch VM scenario is run separately against a disposable VM.
 - `docker-cleanup.timer` removes all unused Docker images every Sunday at 03:00.
