@@ -57,6 +57,13 @@ export KODI_PASSWORD="mypassword"
 
 **Existing installations:** install `uv` if neither `uv` nor `python3.13` is available, then run the bootstrap command before deploying this refactor. The timer now uses `/opt/nuc-ansible/bin/ansible-pull`. The playbook checks that runtime exists before changing the timer. Re-run bootstrap when either requirements file changes; dependency upgrades are explicit rather than performed by the ten-minute timer.
 
+On an existing Arch installation, run as root from the repository directory:
+
+```bash
+pacman -Syu --needed uv
+bash scripts/bootstrap.sh /opt/nuc-ansible
+```
+
 The first run installs the `ansible-pull` timer. From then on the configuration is re-applied every 10 minutes, so changes pushed to this repo reach the machine automatically.
 
 The `docker` role expects the Step CA admin provisioner password in `/home/kodi/pki/admin.txt`, to issue Traefik's wildcard certificate.
