@@ -3,6 +3,18 @@
   "extends": [
     "config:recommended"
   ],
+  "ansible-galaxy": {
+    "enabled": true,
+    "managerFilePatterns": [
+      "/^requirements\\.yml$/"
+    ]
+  },
+  "pip_requirements": {
+    "enabled": true,
+    "managerFilePatterns": [
+      "/^requirements-dev\\.txt$/"
+    ]
+  },
   "customManagers": [
     {
       "description": "Handle Docker images in Ansible var files",
