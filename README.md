@@ -8,7 +8,7 @@ The machine configures itself with `ansible-pull`: a systemd timer pulls this re
 
 | Role | What it sets up |
 | --- | --- |
-| `base` | `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: removable drive automounting with udev-media-automount, PipeWire audio, dnsmasq DNS server for the Zerotier LAN, reflector mirrorlist refresh |
+| `base` | IPv6 disabled, `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: removable drive automounting with udev-media-automount, PipeWire audio, dnsmasq DNS server for the Zerotier LAN, reflector mirrorlist refresh |
 | `gui` | labwc (Wayland) or i3 (Xorg) desktop, plus optional apps: Kodi, Firefox, Alacritty |
 | `docker` | Docker with a weekly image cleanup timer, and optional services: |
 
@@ -73,7 +73,7 @@ ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter --tags gui
 
 | Role | Tags |
 | --- | --- |
-| `base` | `base`, `ansible-pull`, `user`, `udev-media-automount`, `pipewire`, `dnsmasq`, `reflector` |
+| `base` | `base`, `ipv6`, `ansible-pull`, `user`, `udev-media-automount`, `pipewire`, `dnsmasq`, `reflector` |
 | `gui` | `gui`, `gui-install`, `gui-config`, `gui-remove` |
 | `docker` | `docker`, `docker-install`, `step-ca`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing`, `docker-remove` |
 

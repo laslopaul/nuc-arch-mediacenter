@@ -1,6 +1,10 @@
 ---
 # code: language=ansible
 
+- name: Disable IPv6
+  ansible.builtin.import_tasks: 07-disable_ipv6.yml
+  tags: ipv6
+
 - name: Enable ansible-pull
   ansible.builtin.import_tasks: 01-ansible_pull.yml
   tags: ansible-pull
