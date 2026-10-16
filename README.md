@@ -64,6 +64,8 @@ pacman -Syu --needed uv
 bash scripts/bootstrap.sh /opt/nuc-ansible
 ```
 
+Bootstrap recreates the virtual environment and installs uv-managed Python next to it, at `/opt/nuc-ansible-python`. Both contain public runtime files and are readable by the managed user, so tasks using `become_user` can execute Python. The interpreter must not point into `/root/.local/share/uv/python`, which unprivileged users cannot traverse. If an older bootstrap produces `Permission denied` for `/opt/nuc-ansible/bin/python`, re-run the updated script and verify with `sudo -u kodi /opt/nuc-ansible/bin/python --version` (substitute the configured username).
+
 The first run installs the `ansible-pull` timer. From then on the configuration is re-applied every 10 minutes, so changes pushed to this repo reach the machine automatically.
 
 The `docker` role expects the Step CA admin provisioner password in `/home/kodi/pki/admin.txt`, to issue Traefik's wildcard certificate.
