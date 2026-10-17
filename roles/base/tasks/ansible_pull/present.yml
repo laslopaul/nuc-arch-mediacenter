@@ -3,13 +3,32 @@
 
 - name: Check pinned Ansible runtime
   ansible.builtin.stat:
-    path: "{{ ansible_runtime_path }}/bin/ansible-pull"
+    path: "{{ ansible_runtime_path }}/venv/bin/ansible-pull"
   register: base_ansible_runtime
 
 - name: Require runtime bootstrap before enabling automatic configuration
   ansible.builtin.assert:
     that: base_ansible_runtime.stat.exists
     fail_msg: "Run bash scripts/bootstrap.sh {{ ansible_runtime_path }} before applying local.yml."
+
+- name: Verify the pinned Ansible launcher and its Python interpreter
+  ansible.builtin.command:
+    argv: ["{{ ansible_runtime_path }}/venv/bin/ansible-pull", --version]
+  environment:
+    ANSIBLE_LOCAL_TEMP: "{{ playbook_dir }}/.ansible/tmp"
+  register: base_ansible_runtime_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Require a working runtime before changing the timer
+  ansible.builtin.assert:
+    that: base_ansible_runtime_check.rc == 0
+    fail_msg: >-
+      The pinned runtime cannot execute: {{ base_ansible_runtime_check.msg | default('') }}
+      {{ base_ansible_runtime_check.stderr | default('') }}.
+      Run bash scripts/bootstrap.sh {{ ansible_runtime_path }} and verify
+      {{ ansible_runtime_path }}/venv/bin/ansible-pull --version before enabling the timer.
 
 - name: Copy ansible-pull timer to systemd folder
   ansible.builtin.copy:

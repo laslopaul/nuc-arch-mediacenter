@@ -3,12 +3,16 @@ set -euo pipefail
 # Ansible also executes modules as the managed, unprivileged user.
 umask 022
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-venv_dir=${1:-"$repo_dir/.venv"}
+runtime_dir=${1:-"$repo_dir/.venv"}
+mkdir -p "$runtime_dir"
+runtime_dir=$(cd -- "$runtime_dir" && pwd)
+chmod a+rx "$runtime_dir"
+venv_dir="$runtime_dir/venv"
 # uv supplies the same Python version on Arch and CI.
 if command -v uv >/dev/null; then
     # Keep the interpreter outside root's private data directory. Recreate the
     # venv so existing Python symlinks are updated to this shared installation.
-    export UV_PYTHON_INSTALL_DIR="${venv_dir}-python"
+    export UV_PYTHON_INSTALL_DIR="$runtime_dir/python"
     export UV_PYTHON_PREFERENCE=only-managed
     uv venv --python 3.13 --clear "$venv_dir"
     uv pip install --python "$venv_dir/bin/python" -r "$repo_dir/requirements-dev.txt"
@@ -27,5 +31,9 @@ EOF
 fi
 chmod -R a+rX "$venv_dir"
 ANSIBLE_LOCAL_TEMP="$repo_dir/.ansible/tmp" "$venv_dir/bin/ansible-galaxy" collection install \
-    -r "$repo_dir/requirements.yml" -p "$venv_dir/collections"
-echo "Environment ready: $venv_dir"
+    -r "$repo_dir/requirements.yml" -p "$runtime_dir/collections"
+if ! ANSIBLE_LOCAL_TEMP="$repo_dir/.ansible/tmp" "$venv_dir/bin/ansible-pull" --version; then
+    echo "Bootstrap failed: $venv_dir/bin/ansible-pull cannot execute. Check its Python interpreter and the installation errors above." >&2
+    exit 1
+fi
+echo "Environment ready: $runtime_dir (executables: $venv_dir/bin)"

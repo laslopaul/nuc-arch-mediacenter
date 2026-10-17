@@ -52,10 +52,10 @@ git clone https://github.com/laslopaul/nuc-arch-mediacenter /root/nuc-arch-media
 cd /root/nuc-arch-mediacenter
 bash scripts/bootstrap.sh /opt/nuc-ansible
 export KODI_PASSWORD="mypassword"
-/opt/nuc-ansible/bin/ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter
+/opt/nuc-ansible/venv/bin/ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter
 ```
 
-**Existing installations:** install `uv` if neither `uv` nor `python3.13` is available, then run the bootstrap command before deploying this refactor. The timer now uses `/opt/nuc-ansible/bin/ansible-pull`. The playbook checks that runtime exists before changing the timer. Re-run bootstrap when either requirements file changes; dependency upgrades are explicit rather than performed by the ten-minute timer.
+**Existing installations:** install `uv` if neither `uv` nor `python3.13` is available, then run the bootstrap command before deploying this refactor. The timer now uses `/opt/nuc-ansible/venv/bin/ansible-pull`. The playbook checks that runtime exists before changing the timer. Re-run bootstrap when either requirements file changes; dependency upgrades are explicit rather than performed by the ten-minute timer.
 
 On an existing Arch installation, run as root from the repository directory:
 
@@ -64,7 +64,21 @@ pacman -Syu --needed uv
 bash scripts/bootstrap.sh /opt/nuc-ansible
 ```
 
-Bootstrap recreates the virtual environment and installs uv-managed Python next to it, at `/opt/nuc-ansible-python`. Both contain public runtime files and are readable by the managed user, so tasks using `become_user` can execute Python. The interpreter must not point into `/root/.local/share/uv/python`, which unprivileged users cannot traverse. If an older bootstrap produces `Permission denied` for `/opt/nuc-ansible/bin/python`, re-run the updated script and verify with `sudo -u kodi /opt/nuc-ansible/bin/python --version` (substitute the configured username).
+All runtime files live under `/opt/nuc-ansible`: `python/` contains uv-managed Python, `venv/` contains the Ansible virtual environment, and `collections/` contains the pinned Ansible collections. Bootstrap recreates only `venv/`, preserving its Python installation and collections. These runtime files are readable by the managed user so tasks using `become_user` can execute Python. If an older bootstrap produces `Permission denied`, re-run the updated script and verify with `sudo -u kodi /opt/nuc-ansible/venv/bin/python --version` (substitute the configured username).
+
+When migrating from the previous layout, stop the timer and service, bootstrap `/opt/nuc-ansible`, then apply `local.yml` using `/opt/nuc-ansible/venv/bin/ansible-playbook local.yml` as root from the checkout. This updates systemd to the new launcher path before the timer resumes. Existing files in the old layout are left in place.
+
+If systemd reports `Failed at step EXEC` and `No such file or directory` for `/opt/nuc-ansible/venv/bin/ansible-pull`, either the launcher or its shebang interpreter may be missing. A bootstrap run without the path argument installs only the development `.venv`, which does not repair `/opt/nuc-ansible`. From the updated repository checkout, run as root:
+
+```bash
+systemctl stop ansible-pull.timer ansible-pull.service
+bash scripts/bootstrap.sh /opt/nuc-ansible &&
+  /opt/nuc-ansible/venv/bin/ansible-pull --version &&
+  /opt/nuc-ansible/venv/bin/ansible-playbook local.yml &&
+  systemctl start ansible-pull.timer
+```
+
+Apply `local.yml` to update the service launcher path; restart the timer only after bootstrap, the version check, and the playbook succeed. If they fail, inspect the first installation error; if the launcher exists, `head -n 1 /opt/nuc-ansible/venv/bin/ansible-pull` and `readlink -f /opt/nuc-ansible/venv/bin/python` identify its interpreter. Bootstrap and the playbook now check that the launcher actually executes.
 
 The first run installs the `ansible-pull` timer. From then on the configuration is re-applied every 10 minutes, so changes pushed to this repo reach the machine automatically.
 
@@ -82,7 +96,7 @@ SPACESHIP_API_SECRET=...
 Roles and components retain their existing tags, including `qb` and `vw`:
 
 ```bash
-/opt/nuc-ansible/bin/ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter --tags gui
+/opt/nuc-ansible/venv/bin/ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter --tags gui
 ```
 
 | Role | Tags |
@@ -103,7 +117,7 @@ Shared variables are in [group_vars/all.yml](group_vars/all.yml):
 | `managed_user_home` | `/home/{{ username }}` | Managed account home |
 | `media_path` | `{{ managed_user_home }}/Library` | Shared media location |
 | `pki_path` | `{{ managed_user_home }}/pki` | Step CA client state and provisioner password |
-| `ansible_runtime_path` | `/opt/nuc-ansible` | Pinned Ansible virtual environment |
+| `ansible_runtime_path` | `/opt/nuc-ansible` | Root of the pinned Ansible runtime |
 | `zerotier_ip` | `172.27.100.100` | Server's Zerotier IP; dnsmasq listens on it |
 
 Role defaults, which can be overridden in `group_vars/all.yml`:
@@ -217,8 +231,8 @@ To remove Docker, set `docker_enabled: false`. Reconciliation stops the managed 
 First disable the target in configuration and apply `local.yml`. Then run the purge playbook with exact targets:
 
 ```bash
-/opt/nuc-ansible/bin/ansible-playbook purge.yml -e '{"purge_gui_targets": ["kodi", "firefox"]}'
-/opt/nuc-ansible/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["immich"]}'
+/opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_gui_targets": ["kodi", "firefox"]}'
+/opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["immich"]}'
 ```
 
 Purging permanently deletes the selected app profiles or service directory, including its databases, `.env` secrets and CA keys where applicable. Named volumes are removed by explicit catalog names, even after reconciliation has deleted the Compose file. A service with named volumes needs a running Docker daemon for targeted purging; keep `docker_enabled: true` while disabling that service. Existing containers for the selected Compose project must already be removed.
@@ -226,7 +240,7 @@ Purging permanently deletes the selected app profiles or service directory, incl
 To delete **all** Docker engine storage, including unmanaged containers, images and volumes, first apply `docker_enabled: false`, then explicitly select every service and engine storage:
 
 ```bash
-/opt/nuc-ansible/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["step-ca", "traefik", "qbittorrent", "vaultwarden", "plex", "immich", "syncthing"], "purge_docker_engine_data": true}'
+/opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["step-ca", "traefik", "qbittorrent", "vaultwarden", "plex", "immich", "syncthing"], "purge_docker_engine_data": true}'
 ```
 
 No targets are selected by default. Enabled components cannot be purged. Purging does not delete `media_path`. Inspect planned deletions with `--check --diff` before running the command without check mode.
@@ -235,7 +249,7 @@ No targets are selected by default. Enabled components cannot be purged. Purging
 
 ```bash
 bash scripts/bootstrap.sh
-export PATH="$PWD/.venv/bin:$PATH"
+export PATH="$PWD/.venv/venv/bin:$PATH"
 ansible-lint --offline
 ansible-playbook local.yml --syntax-check
 ansible-playbook purge.yml --syntax-check
@@ -244,11 +258,11 @@ python -m unittest discover -s tests -v
 
 The shared environment pins Python tooling and collections. Compose tests need the Docker CLI with Compose, but no daemon; they render all service templates with fixture secrets and validate the results using `docker compose config`. Other checks cover dependency validation, desktop startup selection, cleanup failure propagation, check mode, and shared-package preservation.
 
-For lifecycle and idempotence checks on a **disposable Arch Linux VM**, prepare a Python 3.13 interpreter on the VM (for example with `uv venv --python 3.13 /opt/nuc-ansible`), and provide an SSH inventory with the VM in `[local]` (do not use the production inventory):
+For lifecycle and idempotence checks on a **disposable Arch Linux VM**, prepare the runtime on the VM with `bash scripts/bootstrap.sh /opt/nuc-ansible`, and provide an SSH inventory with the VM in `[local]` (do not use the production inventory):
 
 ```ini
 [local]
-arch-refactor-vm ansible_host=192.0.2.10 ansible_user=root ansible_python_interpreter=/opt/nuc-ansible/bin/python
+arch-refactor-vm ansible_host=192.0.2.10 ansible_user=root ansible_python_interpreter=/opt/nuc-ansible/venv/bin/python
 ```
 
 ```bash

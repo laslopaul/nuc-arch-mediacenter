@@ -7,7 +7,7 @@ User=root
 WorkingDirectory=/root
 Type=oneshot
 Environment=ANSIBLE_COLLECTIONS_PATH={{ ansible_runtime_path }}/collections
-ExecStart={{ ansible_runtime_path }}/bin/ansible-pull -U {{ repo_url }}
+ExecStart={{ ansible_runtime_path }}/venv/bin/ansible-pull -U {{ repo_url }}
 
 [Install]
 WantedBy=multi-user.target

@@ -28,10 +28,10 @@ jobs:
         run: bash scripts/bootstrap.sh
       - name: Lint and syntax checks
         run: |
-          .venv/bin/ansible-lint
-          .venv/bin/ansible-playbook local.yml --syntax-check
-          .venv/bin/ansible-playbook purge.yml --syntax-check
+          .venv/venv/bin/ansible-lint
+          .venv/venv/bin/ansible-playbook local.yml --syntax-check
+          .venv/venv/bin/ansible-playbook purge.yml --syntax-check
       - name: Behavior and Compose checks
         run: |
-          export PATH="$PWD/.venv/bin:$PATH"
+          export PATH="$PWD/.venv/venv/bin:$PATH"
           python -m unittest discover -s tests -v
