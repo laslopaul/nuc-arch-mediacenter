@@ -31,12 +31,12 @@ The services behind Traefik also answer on `<public_domain>` (e.g. `https://vw.<
 ## Install base system
 
 1. Boot from the Arch Linux installation medium.
-2. Check the configuration block at the top of [arch-install.sh](arch-install.sh): disk, hostname, locale, timezone and static IP settings.
+2. Check the configuration block at the top of [arch-install.sh](scripts/arch-install.sh): disk, hostname, locale, timezone and static IP settings.
    `DISK_SETUP=1` repartitions the disk from scratch and **wipes all data**. With the default `0`, only the EFI and root volumes are reformatted and `/home` is kept.
 3. Run the script:
 
    ```bash
-   ROOT_PASSWORD="mypassword" ZEROTIER_NET_ID="8056c2e21c000001" bash arch-install.sh
+   ROOT_PASSWORD="mypassword" ZEROTIER_NET_ID="8056c2e21c000001" bash scripts/arch-install.sh
    ```
 
 4. Authorize the device ID printed by the script in Zerotier Central, then reboot.
