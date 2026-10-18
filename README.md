@@ -256,7 +256,9 @@ ansible-playbook purge.yml --syntax-check
 python -m unittest discover -s tests -v
 ```
 
-The shared environment pins Python tooling and collections. Compose tests need the Docker CLI with Compose, but no daemon; they render all service templates with fixture secrets and validate the results using `docker compose config`. Other checks cover dependency validation, desktop startup selection, cleanup failure propagation, check mode, and shared-package preservation.
+The shared environment pins Python tooling and collections. Python 3.15 currently requires the pinned `ansible-core==2.22.0rc1` release candidate: 2.21.5 crashes during import because it assumes `dataclasses._is_type` exists. The release candidate includes the upstream fix. Bootstrap checks that Ansible imports successfully before installing collections.
+
+Compose tests need the Docker CLI with Compose, but no daemon; they render all service templates with fixture secrets and validate the results using `docker compose config`. Other checks cover dependency validation, desktop startup selection, cleanup failure propagation, check mode, and shared-package preservation.
 
 For lifecycle and idempotence checks on a **disposable Arch Linux VM**, prepare the runtime on the VM with `bash scripts/bootstrap.sh /opt/nuc-ansible`, and provide an SSH inventory with the VM in `[local]` (do not use the production inventory):
 

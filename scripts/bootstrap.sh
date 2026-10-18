@@ -30,10 +30,11 @@ EOF
     exit 1
 fi
 chmod -R a+rX "$venv_dir"
-ANSIBLE_LOCAL_TEMP="$repo_dir/.ansible/tmp" "$venv_dir/bin/ansible-galaxy" collection install \
-    -r "$repo_dir/requirements.yml" -p "$runtime_dir/collections"
+# Catch Python/Ansible import incompatibilities before running Galaxy.
 if ! ANSIBLE_LOCAL_TEMP="$repo_dir/.ansible/tmp" "$venv_dir/bin/ansible-pull" --version; then
     echo "Bootstrap failed: $venv_dir/bin/ansible-pull cannot execute. Check its Python interpreter and the installation errors above." >&2
     exit 1
 fi
+ANSIBLE_LOCAL_TEMP="$repo_dir/.ansible/tmp" "$venv_dir/bin/ansible-galaxy" collection install \
+    -r "$repo_dir/requirements.yml" -p "$runtime_dir/collections"
 echo "Environment ready: $runtime_dir (executables: $venv_dir/bin)"
