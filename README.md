@@ -66,6 +66,20 @@ bash scripts/bootstrap.sh /opt/nuc-ansible
 
 All runtime files live under `/opt/nuc-ansible`: `python/` contains uv-managed Python, `venv/` contains the Ansible virtual environment, and `collections/` contains the pinned Ansible collections. Bootstrap recreates only `venv/`, preserving its Python installation and collections. These runtime files are readable by the managed user so tasks using `become_user` can execute Python. If an older bootstrap produces `Permission denied`, re-run the updated script and verify with `sudo -u kodi /opt/nuc-ansible/venv/bin/python --version` (substitute the configured username).
 
+Bootstrap recreates `venv/` on both the uv and system-Python paths, removing stale executables and packages from previous versions. To also delete older uv-managed Python installations after a successful bootstrap:
+
+```bash
+bash scripts/bootstrap.sh /opt/nuc-ansible --prune-old-python
+```
+
+Preview interpreter cleanup without rebuilding or downloading anything:
+
+```bash
+/opt/nuc-ansible/venv/bin/python scripts/prune-python.py /opt/nuc-ansible --dry-run
+```
+
+Run the same command without `--dry-run` to perform standalone cleanup. It keeps the current interpreter and aliases pointing to it, and removes older installations and stale aliases only from this runtime's `python/` directory. Run it using the runtime's Python; cleanup refuses an external interpreter or a symlinked Python store. Interpreter pruning requires a uv-managed runtime.
+
 When migrating from the previous layout, stop the timer and service, bootstrap `/opt/nuc-ansible`, then apply `local.yml` using `/opt/nuc-ansible/venv/bin/ansible-playbook local.yml` as root from the checkout. This updates systemd to the new launcher path before the timer resumes. Existing files in the old layout are left in place.
 
 If systemd reports `Failed at step EXEC` and `No such file or directory` for `/opt/nuc-ansible/venv/bin/ansible-pull`, either the launcher or its shebang interpreter may be missing. A bootstrap run without the path argument installs only the development `.venv`, which does not repair `/opt/nuc-ansible`. From the updated repository checkout, run as root:

@@ -20,6 +20,9 @@ class BootstrapTests(unittest.TestCase):
             python_store.mkdir(parents=True)
             marker = python_store / 'retained-interpreter'
             marker.write_text('must survive virtual environment recreation')
+            stale_binary = runtime / 'venv/bin/python3.13'
+            stale_binary.parent.mkdir(parents=True)
+            stale_binary.write_text('obsolete interpreter entry')
             uv = tools / 'uv'
             uv.write_text(f'#!{sys.executable}\n' + '''
 import os
@@ -62,6 +65,7 @@ else:
                 env=dict(os.environ, PATH=str(tools) + os.pathsep + os.environ['PATH'],
                          BOOTSTRAP_TEST_LAUNCHER=launcher),
                 text=True, capture_output=True)
+            self.assertFalse(stale_binary.exists(), 'Rebuilding the venv retained an obsolete executable')
             self.assertTrue(marker.is_file(), 'Rebuilding the venv deleted its Python store')
             if launcher != 'working':
                 self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -81,3 +85,37 @@ else:
 
     def test_missing_shebang_interpreter_fails_bootstrap(self):
         self.exercise_bootstrap('broken')
+
+    def test_system_python_fallback_clears_obsolete_executables(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            tools = directory / 'tools'
+            tools.mkdir()
+            for command in ['dirname', 'mkdir', 'chmod']:
+                (tools / command).symlink_to(shutil.which(command))
+            runtime = directory / 'runtime'
+            stale = runtime / 'venv/bin/python3.13'
+            stale.parent.mkdir(parents=True)
+            stale.write_text('obsolete')
+            interpreter = tools / 'python3.15'
+            interpreter.write_text(f'#!{sys.executable}\n' + r'''
+import shutil
+from pathlib import Path
+import sys
+assert sys.argv[1:4] == ['-m', 'venv', '--clear']
+venv = Path(sys.argv[4])
+shutil.rmtree(venv)
+(venv / 'bin').mkdir(parents=True)
+for name in ['python', 'ansible-galaxy', 'ansible-pull']:
+    path = venv / 'bin' / name
+    path.write_text('#!/bin/sh\nexit 0\n')
+    path.chmod(0o755)
+''')
+            interpreter.chmod(0o755)
+            result = subprocess.run(
+                ['/bin/bash', str(ROOT / 'scripts/bootstrap.sh'), str(runtime)],
+                env=dict(os.environ, PATH=str(tools)), text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertFalse(stale.exists())
+            self.assertTrue((runtime / 'venv/bin/python').is_file())
