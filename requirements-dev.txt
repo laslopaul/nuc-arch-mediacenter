@@ -1,14 +1,14 @@
 # Python 3.15; fully pinned shared development, CI, and runtime environment.
 ansible-compat==26.10.0
 ansible-core==2.21.5
-ansible-lint==25.5.0
+ansible-lint==26.10.1
 attrs==26.1.0
 black==26.10.1
 bracex==3.1
 cffi==2.1.1
 click==8.5.0
 cryptography==50.0.2
-filelock==4.2.1
+filelock==4.2.2
 importlib_metadata==9.0.1
 Jinja2==3.1.6
 jsonschema==4.26.0
@@ -31,7 +31,7 @@ wcmatch==11.1
 yamllint==1.38.0
 zipp==4.1.1
 requests==2.32.5
-certifi==2025.10.5
+certifi==2026.7.22
 charset-normalizer==3.5.2
 idna==3.11
-urllib3==2.5.0
+urllib3==2.8.0
