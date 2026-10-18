@@ -1,4 +1,4 @@
-# Python 3.13; fully pinned shared development, CI, and runtime environment.
+# Python 3.15; fully pinned shared development, CI, and runtime environment.
 ansible-compat==26.10.0
 ansible-core==2.21.5
 ansible-lint==25.5.0

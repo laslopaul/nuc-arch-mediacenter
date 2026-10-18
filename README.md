@@ -45,7 +45,7 @@ The script installs the base system with LVM, GRUB (UEFI), systemd-networkd with
 
 ## Apply configuration
 
-After booting into the new system, as root, clone the repository and bootstrap the pinned Ansible environment. The installer provides `uv`; bootstrap uses it to install Python 3.13. On a development machine, an existing `python3.13` also works.
+After booting into the new system, as root, clone the repository and bootstrap the pinned Ansible environment. The installer provides `uv`; bootstrap uses it to install Python 3.15. On a development machine, an existing `python3.15` also works.
 
 ```bash
 git clone https://github.com/laslopaul/nuc-arch-mediacenter /root/nuc-arch-mediacenter
@@ -55,7 +55,7 @@ export KODI_PASSWORD="mypassword"
 /opt/nuc-ansible/venv/bin/ansible-pull -U https://github.com/laslopaul/nuc-arch-mediacenter
 ```
 
-**Existing installations:** install `uv` if neither `uv` nor `python3.13` is available, then run the bootstrap command before deploying this refactor. The timer now uses `/opt/nuc-ansible/venv/bin/ansible-pull`. The playbook checks that runtime exists before changing the timer. Re-run bootstrap when either requirements file changes; dependency upgrades are explicit rather than performed by the ten-minute timer.
+**Existing installations:** install `uv` if neither `uv` nor `python3.15` is available, then run the bootstrap command before deploying this refactor. The timer now uses `/opt/nuc-ansible/venv/bin/ansible-pull`. The playbook checks that runtime exists before changing the timer. Re-run bootstrap when either requirements file changes; dependency upgrades are explicit rather than performed by the ten-minute timer.
 
 On an existing Arch installation, run as root from the repository directory:
 

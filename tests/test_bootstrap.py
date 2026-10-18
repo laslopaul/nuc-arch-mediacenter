@@ -29,13 +29,14 @@ import shutil
 assert os.environ['UV_PYTHON_PREFERENCE'] == 'only-managed'
 if sys.argv[1] == 'venv':
     assert '--clear' in sys.argv
+    assert sys.argv[sys.argv.index('--python') + 1] == '3.15'
     runtime = Path(sys.argv[-1])
     store = Path(os.environ['UV_PYTHON_INSTALL_DIR'])
     assert store == runtime.parent / 'python'
     if runtime.exists():
         shutil.rmtree(runtime)
     store.mkdir(exist_ok=True)
-    python = store / 'python3.13'
+    python = store / 'python3.15'
     python.write_text('#!/bin/sh\\nexit 0\\n')
     python.chmod(0o700)
     (runtime / 'bin').mkdir(parents=True)
