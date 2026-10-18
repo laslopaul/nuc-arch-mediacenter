@@ -31,6 +31,22 @@
   ],
   "packageRules": [
     {
+      "description": "Group Python dependency updates separately from Ansible collections",
+      "matchManagers": ["pip_requirements"],
+      "matchFileNames": ["requirements-dev.txt"],
+      "groupName": "Python dependencies",
+      "groupSlug": "python-dependencies",
+      "separateMajorMinor": false
+    },
+    {
+      "description": "Group Ansible collection updates in their own PR",
+      "matchManagers": ["ansible-galaxy"],
+      "matchFileNames": ["requirements.yml"],
+      "groupName": "Ansible collections",
+      "groupSlug": "ansible-collections",
+      "separateMajorMinor": false
+    },
+    {
       "matchUpdateTypes": [
         "minor",
         "patch",

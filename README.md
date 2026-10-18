@@ -291,6 +291,6 @@ Base tasks are organized by component under `roles/base/tasks/<component>/{prese
 
 ## Maintenance
 
-- [Renovate](renovate.json) runs daily in GitHub Actions and opens PRs for new versions of the Docker images in [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml), GitHub Actions, Ansible Galaxy collections in [requirements.yml](requirements.yml), and Python packages in [requirements-dev.txt](requirements-dev.txt). Minor and patch updates are merged automatically. `ansible-pull` deploys playbook changes; re-run `bash scripts/bootstrap.sh /opt/nuc-ansible` to install updates to either requirements file.
+- [Renovate](renovate.json) runs daily in GitHub Actions and opens PRs for new versions of the Docker images in [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml), GitHub Actions, Ansible Galaxy collections in [requirements.yml](requirements.yml), and Python packages in [requirements-dev.txt](requirements-dev.txt). Python package updates are grouped into one PR, and Ansible collection updates into a separate PR. Minor and patch updates are merged automatically. `ansible-pull` deploys playbook changes; re-run `bash scripts/bootstrap.sh /opt/nuc-ansible` to install updates to either requirements file.
 - CI runs lint, playbook syntax checks and behavior/Compose validation for changes to Ansible, scripts and tests. The Arch VM scenario is run separately against a disposable VM.
 - `docker-cleanup.timer` removes all unused Docker images every Sunday at 03:00.
