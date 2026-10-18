@@ -1,121 +1,87 @@
 """Check bootstrap's shared interpreter setup without downloading dependencies."""
+
 import os
-from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+FAKE_TOOL = ROOT / "tests/fixtures/bootstrap_tool.py"
 
 
 class BootstrapTests(unittest.TestCase):
-    def exercise_bootstrap(self, launcher="working"):
-        with tempfile.TemporaryDirectory() as directory:
-            directory = Path(directory)
-            tools = directory / 'tools'
-            tools.mkdir()
-            runtime = directory / 'runtime'
-            python_store = runtime / 'python'
-            python_store.mkdir(parents=True)
-            marker = python_store / 'retained-interpreter'
-            marker.write_text('must survive virtual environment recreation')
-            stale_binary = runtime / 'venv/bin/python3.13'
-            stale_binary.parent.mkdir(parents=True)
-            stale_binary.write_text('obsolete interpreter entry')
-            uv = tools / 'uv'
-            uv.write_text(f'#!{sys.executable}\n' + '''
-import os
-from pathlib import Path
-import sys
-import shutil
-assert os.environ['UV_PYTHON_PREFERENCE'] == 'only-managed'
-if sys.argv[1] == 'venv':
-    assert '--clear' in sys.argv
-    assert sys.argv[sys.argv.index('--python') + 1] == '3.15'
-    runtime = Path(sys.argv[-1])
-    store = Path(os.environ['UV_PYTHON_INSTALL_DIR'])
-    assert store == runtime.parent / 'python'
-    if runtime.exists():
-        shutil.rmtree(runtime)
-    store.mkdir(exist_ok=True)
-    python = store / 'python3.15'
-    python.write_text('#!/bin/sh\\nexit 0\\n')
-    python.chmod(0o700)
-    (runtime / 'bin').mkdir(parents=True)
-    (runtime / 'bin/python').symlink_to(python)
-    galaxy = runtime / 'bin/ansible-galaxy'
-    galaxy.write_text('#!/bin/sh\\nexit 0\\n')
-    galaxy.chmod(0o700)
-    launcher = runtime / 'bin/ansible-pull'
-    mode = os.environ['BOOTSTRAP_TEST_LAUNCHER']
-    if mode == 'working':
-        launcher.write_bytes(galaxy.read_bytes())
-        launcher.chmod(0o700)
-    elif mode == 'broken':
-        launcher.write_bytes(b'#!/nonexistent-bootstrap-test-python\\n')
-        launcher.chmod(0o700)
-else:
-    assert sys.argv[1] == 'pip'
-''')
-            uv.chmod(0o755)
-            result = subprocess.run(
-                ['bash', '-c', 'umask 077; exec bash "$1" "$2"',
-                 'bootstrap-test', str(ROOT / 'scripts/bootstrap.sh'), str(runtime)],
-                env=dict(os.environ, PATH=str(tools) + os.pathsep + os.environ['PATH'],
-                         BOOTSTRAP_TEST_LAUNCHER=launcher),
-                text=True, capture_output=True)
-            self.assertFalse(stale_binary.exists(), 'Rebuilding the venv retained an obsolete executable')
-            self.assertTrue(marker.is_file(), 'Rebuilding the venv deleted its Python store')
-            if launcher != 'working':
-                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-                self.assertIn('Bootstrap failed:', result.stderr)
-                self.assertNotIn('Environment ready:', result.stdout)
-                return
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            for path in [runtime, runtime / 'venv/bin', runtime / 'venv/bin/ansible-galaxy',
-                         runtime / 'python', (runtime / 'venv/bin/python').resolve()]:
-                self.assertEqual(path.stat().st_mode & 0o005, 0o005, str(path))
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.tools = Path(directory.name) / "tools"
+        self.tools.mkdir()
+        self.runtime = Path(directory.name) / "runtime"
+        self.store = self.runtime / "python"
+        self.store.mkdir(parents=True)
+        self.marker = self.store / "retained-interpreter"
+        self.marker.touch()
+        self.stale = self.runtime / "venv/bin/python3.13"
+        self.stale.parent.mkdir(parents=True)
+        self.stale.touch()
+
+        # An isolated PATH makes the selected backend deterministic on any host.
+        for name in ["dirname", "mkdir", "chmod"]:
+            command = shutil.which(name)
+            if command is None:
+                self.fail(f"Required test command is unavailable: {name}")
+            (self.tools / name).symlink_to(command)
+        (self.tools / "python3").symlink_to(sys.executable)
+
+    def bootstrap(self, backend="uv", launcher="working"):
+        tool = self.tools / backend
+        shutil.copyfile(FAKE_TOOL, tool)
+        tool.chmod(0o755)
+        return subprocess.run(
+            ["/bin/bash", str(ROOT / "scripts/bootstrap.sh"), str(self.runtime)],
+            env=dict(
+                os.environ,
+                PATH=str(self.tools),
+                BOOTSTRAP_TEST_LAUNCHER=launcher,
+            ),
+            text=True,
+            capture_output=True,
+            umask=0o077,
+        )
 
     def test_uv_runtime_uses_shared_python_with_readable_permissions(self):
-        self.exercise_bootstrap()
+        result = self.bootstrap()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(self.stale.exists())
+        self.assertTrue(self.marker.is_file())
+        python = (self.runtime / "venv/bin/python").resolve()
+        self.assertEqual(python.parent, self.store.resolve())
+        for path in [
+            self.runtime,
+            self.runtime / "venv/bin",
+            self.runtime / "venv/bin/ansible-galaxy",
+            self.store,
+            python,
+        ]:
+            self.assertEqual(path.stat().st_mode & 0o005, 0o005, str(path))
 
     def test_missing_launcher_fails_bootstrap(self):
-        self.exercise_bootstrap('missing')
+        result = self.bootstrap(launcher="missing")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Bootstrap failed:", result.stderr)
+        self.assertNotIn("Environment ready:", result.stdout)
 
     def test_missing_shebang_interpreter_fails_bootstrap(self):
-        self.exercise_bootstrap('broken')
+        result = self.bootstrap(launcher="broken")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Bootstrap failed:", result.stderr)
+        self.assertNotIn("Environment ready:", result.stdout)
 
     def test_system_python_fallback_clears_obsolete_executables(self):
-        import shutil
-        with tempfile.TemporaryDirectory() as directory:
-            directory = Path(directory)
-            tools = directory / 'tools'
-            tools.mkdir()
-            for command in ['dirname', 'mkdir', 'chmod']:
-                (tools / command).symlink_to(shutil.which(command))
-            runtime = directory / 'runtime'
-            stale = runtime / 'venv/bin/python3.13'
-            stale.parent.mkdir(parents=True)
-            stale.write_text('obsolete')
-            interpreter = tools / 'python3.15'
-            interpreter.write_text(f'#!{sys.executable}\n' + r'''
-import shutil
-from pathlib import Path
-import sys
-assert sys.argv[1:4] == ['-m', 'venv', '--clear']
-venv = Path(sys.argv[4])
-shutil.rmtree(venv)
-(venv / 'bin').mkdir(parents=True)
-for name in ['python', 'ansible-galaxy', 'ansible-pull']:
-    path = venv / 'bin' / name
-    path.write_text('#!/bin/sh\nexit 0\n')
-    path.chmod(0o755)
-''')
-            interpreter.chmod(0o755)
-            result = subprocess.run(
-                ['/bin/bash', str(ROOT / 'scripts/bootstrap.sh'), str(runtime)],
-                env=dict(os.environ, PATH=str(tools)), text=True, capture_output=True)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertFalse(stale.exists())
-            self.assertTrue((runtime / 'venv/bin/python').is_file())
+        result = self.bootstrap(backend="python3.15")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(self.stale.exists())
+        self.assertTrue(self.marker.is_file())
+        self.assertTrue((self.runtime / "venv/bin/python").is_file())
