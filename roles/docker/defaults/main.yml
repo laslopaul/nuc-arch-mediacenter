@@ -90,7 +90,7 @@ docker_service_catalog:
 docker_step_ca_fingerprint: cb8e704102547f8a85f656a6419a5c7c3ae93a7ef5eda3bb1504f6a31acd8a9c
 
 images:
-  traefik: "traefik:v3.7.15"
+  traefik: "traefik:v3.7.16"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.2.4"
   vaultwarden: "vaultwarden/server:1.37.4"
   plex: "lscr.io/linuxserver/plex:1.43.4"
