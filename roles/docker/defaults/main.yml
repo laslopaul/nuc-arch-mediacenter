@@ -91,7 +91,7 @@ docker_step_ca_fingerprint: cb8e704102547f8a85f656a6419a5c7c3ae93a7ef5eda3bb1504
 
 images:
   traefik: "traefik:v3.7.16"
-  qbittorrent: "lscr.io/linuxserver/qbittorrent:5.2.4"
+  qbittorrent: "lscr.io/linuxserver/qbittorrent:5.3.0"
   vaultwarden: "vaultwarden/server:1.37.4"
   plex: "lscr.io/linuxserver/plex:1.43.5"
   step-ca: "smallstep/step-ca:0.30.2"
