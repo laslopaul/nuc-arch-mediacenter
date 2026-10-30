@@ -1,7 +1,7 @@
 # Python 3.15; fully pinned shared development, CI, and runtime environment.
 ansible-compat==26.10.0
 # Python 3.15 support requires the dataclasses patch fix in this release candidate.
-ansible-core==2.22.0rc1
+ansible-core==2.22.0rc2
 ansible-lint==26.10.1
 attrs==26.1.0
 black==26.10.1
@@ -19,7 +19,7 @@ mypy_extensions==1.1.0
 packaging==26.3
 passlib==1.7.4
 pathspec==1.1.1
-platformdirs==4.13.5
+platformdirs==4.14.0
 pycparser==3.12
 pytokens==0.4.1
 PyYAML==6.0.3
