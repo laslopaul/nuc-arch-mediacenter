@@ -1,0 +1,81 @@
+---
+# Retired service cleanup. Preserve CA keys and other data for manual recovery.
+- name: Check for the Docker socket
+  ansible.builtin.stat:
+    path: /var/run/docker.sock
+  register: docker_legacy_socket
+
+- name: Remove the retired Step CA container
+  community.docker.docker_container:
+    name: step-ca
+    state: absent
+  when: docker_legacy_socket.stat.exists
+
+- name: Check for the retired certificate renewal unit
+  ansible.builtin.stat:
+    path: /etc/systemd/system/traefik-cert-renewer.service
+  register: docker_legacy_renewer
+
+- name: Stop and disable retired certificate renewal
+  ansible.builtin.systemd:
+    name: traefik-cert-renewer.service
+    state: stopped
+    enabled: false
+  when: docker_legacy_renewer.stat.exists
+
+- name: Remove the retired certificate renewal unit
+  ansible.builtin.file:
+    path: /etc/systemd/system/traefik-cert-renewer.service
+    state: absent
+  notify: Reload Docker systemd units
+
+- name: Remove retired CA deployment and proxy configuration
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ docker_path }}/step/docker-compose.yml"
+    - "{{ docker_path }}/{{ docker_service_catalog.traefik.directory }}/dynamic/tls.yml"
+    - /usr/local/bin/step
+
+- name: Check for the retained CA certificate
+  ansible.builtin.stat:
+    path: "{{ docker_path }}/step/data/certs/root_ca.crt"
+  register: docker_legacy_ca
+
+- name: Check whether the retired root is still trusted
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - verify
+      - -no_check_time
+      - -CAfile
+      - /etc/ssl/certs/ca-certificates.crt
+      - "{{ docker_legacy_ca.stat.path }}"
+  register: docker_legacy_ca_verify
+  changed_when: false
+  failed_when: docker_legacy_ca_verify.rc not in [0, 2]
+  check_mode: false
+  when: docker_legacy_ca.stat.exists
+
+- name: Remove the retired root from the trust store
+  ansible.builtin.command:
+    argv: [trust, anchor, --remove, "{{ docker_legacy_ca.stat.path }}"]
+  changed_when: true
+  when:
+    - docker_legacy_ca.stat.exists
+    - docker_legacy_ca_verify.rc == 0
+  notify: Update CA trust
+
+- name: Remove the managed CA trust anchor
+  ansible.builtin.file:
+    path: /etc/ca-certificates/trust-source/anchors/nuc-step-ca.crt
+    state: absent
+  notify: Update CA trust
+
+- name: Remove the obsolete CA CLI when no other package needs it
+  ansible.builtin.import_role:
+    name: package_cleanup
+  vars:
+    package_cleanup_candidates: [step-cli]
+  when: docker_purge_packages | bool

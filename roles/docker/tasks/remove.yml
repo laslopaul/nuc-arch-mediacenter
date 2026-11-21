@@ -4,7 +4,7 @@
 - name: Find unselected Docker services
   ansible.builtin.set_fact:
     # reverse deployment order: apps first, then Traefik (owner of the
-    # traefik_traefik network), then Step CA
+    # traefik_traefik network)
     docker_removed: "{{ docker_service_order | reverse | reject('in', docker_selected) | list }}"
 
 - name: Check for Docker
@@ -32,36 +32,6 @@
   when:
     - docker_binary.stat.exists
     - item.stat.exists
-
-# Traefik
-- name: Check for traefik-cert-renewer.service
-  ansible.builtin.stat:
-    path: /etc/systemd/system/traefik-cert-renewer.service
-  register: traefik_renewer_unit
-  when: "'traefik' in docker_removed"
-
-- name: Disable traefik-cert-renewer.service
-  ansible.builtin.systemd:
-    name: traefik-cert-renewer
-    state: stopped
-    enabled: false
-  when:
-    - "'traefik' in docker_removed"
-    - traefik_renewer_unit.stat.exists
-
-- name: Remove traefik-cert-renewer.service
-  ansible.builtin.file:
-    path: /etc/systemd/system/traefik-cert-renewer.service
-    state: absent
-  register: traefik_renewer_removed
-  when: "'traefik' in docker_removed"
-
-# Step CA
-- name: Remove symlink to step
-  ansible.builtin.file:
-    path: /usr/local/bin/step
-    state: absent
-  when: "'step-ca' in docker_removed"
 
 # Service files
 - name: Remove compose files of unselected services
@@ -94,13 +64,8 @@
     - /usr/local/bin/docker-cleanup.sh
     - /etc/systemd/system/docker-cleanup.timer
     - /etc/systemd/system/docker-cleanup.service
-  register: docker_cleanup_removed
+  notify: Reload Docker systemd units
   when: not docker_enabled | bool
-
-- name: Reload systemd
-  ansible.builtin.systemd:
-    daemon_reload: true
-  when: traefik_renewer_removed is changed or docker_cleanup_removed is changed
 
 - name: Disable Docker service
   ansible.builtin.systemd:
@@ -117,8 +82,7 @@
 - name: Uninstall packages of removed components not required by others
   vars:
     docker_removed_packages: >-
-      {{ (['step-cli'] if 'step-ca' in docker_removed else [])
-         + ([] if docker_enabled | bool else ['docker-compose', 'fuse-overlayfs', 'docker', 'containerd', 'runc']) }}
+      {{ [] if docker_enabled | bool else ['docker-compose', 'fuse-overlayfs', 'docker', 'containerd', 'runc'] }}
     package_cleanup_candidates: "{{ docker_removed_packages }}"
   ansible.builtin.import_role:
     name: package_cleanup

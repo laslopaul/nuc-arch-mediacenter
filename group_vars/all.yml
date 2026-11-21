@@ -4,16 +4,12 @@
 username: kodi
 managed_user_home: "/home/{{ username }}"
 media_path: "{{ managed_user_home }}/Library"
-pki_path: "{{ managed_user_home }}/pki"
 ansible_runtime_path: /opt/nuc-ansible
-domain: nuc-server.lan
 public_domain: laslopaul.dev
-zerotier_ip: "172.27.100.100"
 
 # base role: PipeWire disabled & uninstalled
 base_components:
   - udev-media-automount
-  - dnsmasq
   - reflector
 base_purge_packages: true
 

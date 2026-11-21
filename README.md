@@ -8,7 +8,7 @@ The machine configures itself with `ansible-pull`: a systemd timer pulls this re
 
 | Role | What it sets up |
 | --- | --- |
-| `base` | IPv6 disabled, `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: removable drive automounting with udev-media-automount, PipeWire audio, dnsmasq DNS server for the Zerotier LAN, reflector mirrorlist refresh |
+| `base` | IPv6 disabled, `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: removable drive automounting with udev-media-automount, PipeWire audio, reflector mirrorlist refresh |
 | `gui` | labwc (Wayland) or i3 (Xorg) desktop, plus optional apps: Kodi, Firefox, Alacritty |
 | `docker` | Docker with a weekly image cleanup timer, and optional services: |
 
@@ -16,17 +16,14 @@ Docker services, all deployed with Docker Compose under `~/docker/<folder>`:
 
 | Service | Name in `docker_services` | Address |
 | --- | --- | --- |
-| Step CA (private certificate authority) | `step-ca` | `https://<domain>:9000` |
-| Traefik (reverse proxy, TLS from Step CA, and Let's Encrypt for `<public_domain>`) | `traefik` | port 443 |
-| qBittorrent | `qbittorrent` | `https://qb.<domain>` |
-| Vaultwarden | `vaultwarden` | `https://vw.<domain>` |
+| Traefik (reverse proxy, Let's Encrypt for `<public_domain>`) | `traefik` | port 443 |
+| qBittorrent | `qbittorrent` | `https://qb.<public_domain>` |
+| Vaultwarden | `vaultwarden` | `https://vw.<public_domain>` |
 | Plex | `plex` | host network, port 32400 |
-| Immich | `immich` | `https://immich.<domain>` |
-| Syncthing | `syncthing` | `https://sync.<domain>` |
+| Immich | `immich` | `https://immich.<public_domain>` |
+| Syncthing | `syncthing` | `https://sync.<public_domain>` |
 
-The services behind Traefik also answer on `<public_domain>` (e.g. `https://vw.<public_domain>`).
-
-`<domain>` is `nuc-server.lan` by default. dnsmasq resolves it and all its subdomains to the server's Zerotier IP.
+`public_domain` is `laslopaul.dev` by default. Service DNS records are managed outside this repository; no local DNS server is installed.
 
 ## Install base system
 
@@ -96,9 +93,7 @@ Apply `local.yml` to update the service launcher path; restart the timer only af
 
 The first run installs the `ansible-pull` timer. From then on the configuration is re-applied every 10 minutes, so changes pushed to this repo reach the machine automatically.
 
-The `docker` role expects the Step CA admin provisioner password in `/home/kodi/pki/admin.txt`, to issue Traefik's wildcard certificate.
-
-Traefik also gets a Let's Encrypt wildcard certificate for `*.<public_domain>` (without the apex domain) through a DNS-01 challenge with Spaceship DNS. It needs a Spaceship API key with DNS records read & write access in `/home/kodi/docker/traefik/.env`:
+Traefik gets a Let's Encrypt wildcard certificate for `*.<public_domain>` (without the apex domain) through a DNS-01 challenge with Spaceship DNS. It needs a Spaceship API key with DNS records read & write access in `/home/kodi/docker/traefik/.env`:
 
 ```bash
 SPACESHIP_API_KEY=...
@@ -115,9 +110,9 @@ Roles and components retain their existing tags, including `qb` and `vw`:
 
 | Role | Tags |
 | --- | --- |
-| `base` | `base`, `ipv6`, `ansible-pull`, `user`, `udev-media-automount`, `pipewire`, `dnsmasq`, `reflector` |
+| `base` | `base`, `ipv6`, `ansible-pull`, `user`, `udev-media-automount`, `pipewire`, `reflector` |
 | `gui` | `gui`, `gui-install`, `gui-config`, `gui-remove` |
-| `docker` | `docker`, `docker-install`, `step-ca`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing`, `docker-remove` |
+| `docker` | `docker`, `docker-install`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing`, `docker-remove` |
 
 ## Configuration
 
@@ -126,13 +121,10 @@ Shared variables are in [group_vars/all.yml](group_vars/all.yml):
 | Variable | Default | Description |
 | --- | --- | --- |
 | `username` | `kodi` | Main user |
-| `domain` | `nuc-server.lan` | Domain for the services |
 | `public_domain` | `laslopaul.dev` | Public domain with a Let's Encrypt wildcard certificate |
 | `managed_user_home` | `/home/{{ username }}` | Managed account home |
 | `media_path` | `{{ managed_user_home }}/Library` | Shared media location |
-| `pki_path` | `{{ managed_user_home }}/pki` | Step CA client state and provisioner password |
 | `ansible_runtime_path` | `/opt/nuc-ansible` | Root of the pinned Ansible runtime |
-| `zerotier_ip` | `172.27.100.100` | Server's Zerotier IP; dnsmasq listens on it |
 
 Role defaults, which can be overridden in `group_vars/all.yml`:
 
@@ -146,17 +138,15 @@ Role defaults, which can be overridden in `group_vars/all.yml`:
 base_components:
   - udev-media-automount
   - pipewire
-  - dnsmasq
   - reflector
 base_purge_packages: true
 ```
 
 A component left out of `base_components` gets its services stopped & disabled, its config removed and its packages uninstalled. Packages still required by another installed package are kept. Set `base_purge_packages: false` to keep the packages installed and only disable and unconfigure the component.
 
-Things to keep in mind:
+On existing installations, migration stops and disables the retired dnsmasq service and removes its configuration. With `base_purge_packages: true`, it also uninstalls dnsmasq when no other package requires it. DNS configuration now lives outside this repository.
 
-- Removing `dnsmasq` stops DNS for `<domain>` on the Zerotier LAN.
-- `fstrim.timer` is enabled by the udev-media-automount tasks.
+`fstrim.timer` is enabled by the udev-media-automount tasks.
 
 ### Removable drive automounting
 
@@ -210,7 +200,6 @@ Desktop startup templates launch only selected apps. PipeWire setup in startup s
 ```yaml
 docker_enabled: true
 docker_services:
-  - step-ca
   - traefik
   - qbittorrent
   - vaultwarden
@@ -224,11 +213,11 @@ docker_purge_packages: true
 A service left out of `docker_services` is stopped, its containers are removed with `docker compose down`, and its compose file is deleted. On top of that:
 
 - its images are deleted (`docker_purge_images`)
-- removing `step-ca` also removes the `step` symlink, and uninstalls `step-cli` (`docker_purge_packages`)
-- removing `traefik` also stops and removes `traefik-cert-renewer.service`
-Service directories, secrets, databases, media libraries, named volumes and CA trust are retained. Data deletion is handled only by [purge.yml](purge.yml); the old `docker_purge_data` setting is no longer used.
+Service directories, secrets, databases, media libraries and named volumes are retained. Data deletion is handled only by [purge.yml](purge.yml); the old `docker_purge_data` setting is no longer used.
 
-Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Immich and Syncthing need `traefik`, and `traefik` needs `step-ca`. Removal runs in reverse order (apps, then Traefik, then Step CA).
+Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Immich and Syncthing need `traefik`. Removal runs in reverse order (apps, then Traefik).
+
+Step CA is retired. Normal reconciliation removes its container, Compose file, certificate renewal unit, proxy TLS configuration, trust anchors and unused `step-cli` package. Existing CA data under `~/docker/step`, old certificates and files under `~/pki` are retained for manual recovery. Traefik uses only Let's Encrypt; its existing ACME storage is retained.
 
 To add a service with a plain Docker Compose deployment:
 
@@ -236,7 +225,7 @@ To add a service with a plain Docker Compose deployment:
 2. Add its directory, Compose project name, named volumes, subdirectories, dependencies, template and tag to `docker_service_catalog` in [Docker defaults](roles/docker/defaults/main.yml). Named volumes must be listed explicitly for targeted purging.
 3. Add it to `docker_service_order` after its dependencies, and to `docker_services` when it should be enabled. Add image references to `images` for Renovate.
 
-Deployment follows `docker_service_order`; removal reverses that order. Step CA and Traefik keep their specialized setup tasks. Selection and dependency checks run before Docker changes.
+Deployment follows `docker_service_order`; removal reverses that order. Traefik keeps its specialized setup tasks. Selection and dependency checks run before Docker changes.
 
 To remove Docker, set `docker_enabled: false`. Reconciliation stops the managed services, disables Docker and its cleanup timer, and optionally removes its packages. All retained data survives.
 
@@ -249,12 +238,12 @@ First disable the target in configuration and apply `local.yml`. Then run the pu
 /opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["immich"]}'
 ```
 
-Purging permanently deletes the selected app profiles or service directory, including its databases, `.env` secrets and CA keys where applicable. Named volumes are removed by explicit catalog names, even after reconciliation has deleted the Compose file. A service with named volumes needs a running Docker daemon for targeted purging; keep `docker_enabled: true` while disabling that service. Existing containers for the selected Compose project must already be removed.
+Purging permanently deletes the selected app profiles or service directory, including its databases and `.env` secrets. Named volumes are removed by explicit catalog names, even after reconciliation has deleted the Compose file. A service with named volumes needs a running Docker daemon for targeted purging; keep `docker_enabled: true` while disabling that service. Existing containers for the selected Compose project must already be removed.
 
 To delete **all** Docker engine storage, including unmanaged containers, images and volumes, first apply `docker_enabled: false`, then explicitly select every service and engine storage:
 
 ```bash
-/opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["step-ca", "traefik", "qbittorrent", "vaultwarden", "plex", "immich", "syncthing"], "purge_docker_engine_data": true}'
+/opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["traefik", "qbittorrent", "vaultwarden", "plex", "immich", "syncthing"], "purge_docker_engine_data": true}'
 ```
 
 No targets are selected by default. Enabled components cannot be purged. Purging does not delete `media_path`. Inspect planned deletions with `--check --diff` before running the command without check mode.

@@ -1,6 +1,7 @@
 ---
 # code: language=ansible
 
+# Remove the retired service even though it is no longer a selectable component.
 - name: Gather installed packages
   ansible.builtin.package_facts:
 
@@ -16,7 +17,7 @@
     path: /etc/dnsmasq.conf
     state: absent
 
-- name: Remove unused component packages
+- name: Remove the retired dnsmasq package when unused
   ansible.builtin.import_role:
     name: package_cleanup
   vars:

@@ -27,30 +27,6 @@
   loop: "{{ docker_service_catalog[purge_service].volumes }}"
   when: not purge_docker_engine_data | bool
 
-- name: Check for legacy Step CA certificate
-  ansible.builtin.stat:
-    path: "{{ docker_path }}/{{ docker_service_catalog['step-ca'].directory }}/data/certs/root_ca.crt"
-  register: purge_legacy_ca
-  when: purge_service == 'step-ca'
-
-- name: Remove legacy CA trust anchor before deleting its certificate
-  ansible.builtin.command:
-    argv: [trust, anchor, --remove, "{{ purge_legacy_ca.stat.path }}"]
-  changed_when: true
-  when:
-    - purge_service == 'step-ca'
-    - purge_legacy_ca.stat.exists
-
-- name: Remove managed Step CA trust and client state
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - /etc/ca-certificates/trust-source/anchors/nuc-step-ca.crt
-    - "{{ pki_path }}/step"
-  when: purge_service == 'step-ca'
-  notify: Update CA trust
-
 - name: Delete selected service's retained data directory
   ansible.builtin.file:
     path: "{{ docker_path }}/{{ docker_service_catalog[purge_service].directory }}"

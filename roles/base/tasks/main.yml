@@ -3,7 +3,7 @@
 
 - name: Validate base component selection
   ansible.builtin.assert:
-    that: base_components | difference(['udev-media-automount', 'pipewire', 'dnsmasq', 'reflector']) | length == 0
+    that: base_components | difference(['udev-media-automount', 'pipewire', 'reflector']) | length == 0
     fail_msg: Unsupported base component selection
   tags: always
 
@@ -51,14 +51,8 @@
   when: "'pipewire' not in base_components"
   tags: pipewire
 
-- name: Configure dnsmasq
-  ansible.builtin.import_tasks: dnsmasq/present.yml
-  when: "'dnsmasq' in base_components"
-  tags: dnsmasq
-
-- name: Remove dnsmasq
-  ansible.builtin.import_tasks: dnsmasq/absent.yml
-  when: "'dnsmasq' not in base_components"
+- name: Remove retired dnsmasq
+  ansible.builtin.import_tasks: migrations/dnsmasq.yml
   tags: dnsmasq
 
 - name: Configure reflector

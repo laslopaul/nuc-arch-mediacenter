@@ -33,11 +33,9 @@ class ComposeTests(unittest.TestCase):
             username="fixture",
             managed_user_home="/srv/fixture",
             media_path="/srv/media",
-            pki_path="/srv/pki",
             managed_user_uid=1234,
             managed_user_gid=5678,
             docker_path="/srv/fixture/docker",
-            domain="fixture.lan",
             public_domain="fixture.example",
         )
         with tempfile.TemporaryDirectory() as directory:
@@ -62,6 +60,16 @@ class ComposeTests(unittest.TestCase):
                     self.assertEqual(
                         result.returncode, 0, result.stdout + result.stderr
                     )
+                    compose = yaml.safe_load(rendered)
+                    for container in compose["services"].values():
+                        for label in container.get("labels", []):
+                            if ".rule=" in label:
+                                self.assertEqual(label.count("Host("), 1)
+                                self.assertIn(".fixture.example`)", label)
+                    if name == "vaultwarden":
+                        self.assertIn("DOMAIN=https://vw.fixture.example", rendered)
+                    if name == "traefik":
+                        self.assertNotIn("/certs", rendered)
                     if name in ["plex", "syncthing", "qbittorrent"]:
                         self.assertIn("PUID=1234", rendered)
                         self.assertIn("PGID=5678", rendered)
@@ -120,10 +128,10 @@ class CatalogTests(unittest.TestCase):
             path.write_text(yaml.safe_dump(play))
             cases = [
                 ([], True),
-                (["step-ca"], True),
+                (["traefik"], True),
                 (DEFAULTS["docker_service_order"], True),
-                (["traefik"], False),
-                (["step-ca", "vaultwarden"], False),
+                (["qbittorrent"], False),
+                (["step-ca"], False),
                 (["unsupported"], False),
             ]
             for selected, valid in cases:
@@ -275,7 +283,7 @@ class PlaybookTests(unittest.TestCase):
             tasks.mkdir(parents=True)
             for name in ["main.yml", "validate.yml", "deploy.yml"]:
                 shutil.copy(ROOT / "roles/docker/tasks" / name, tasks / name)
-            for name in ["service.yml", "step-ca.yml", "traefik.yml"]:
+            for name in ["service.yml", "traefik.yml"]:
                 (tasks / name).write_text(
                     yaml.safe_dump(
                         [
@@ -288,6 +296,8 @@ class PlaybookTests(unittest.TestCase):
                         ]
                     )
                 )
+            (tasks / "migrations").mkdir()
+            (tasks / "migrations/step-ca.yml").write_text("---\n[]\n")
             for name in ["install.yml", "remove.yml"]:
                 (tasks / name).write_text("---\n[]\n")
             identity = directory / "roles/user_identity/tasks"
@@ -312,7 +322,6 @@ class PlaybookTests(unittest.TestCase):
                 ("qb", ["qbittorrent"]),
                 ("vw", ["vaultwarden"]),
                 ("traefik", ["traefik"]),
-                ("step-ca", ["step-ca"]),
                 ("docker", list(CATALOG)),
             ]:
                 with self.subTest(tag=tag):
