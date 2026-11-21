@@ -15,3 +15,11 @@ services:
     devices:
       - /dev/dri:/dev/dri
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.rule=Host(`plex.{{ public_domain }}`)"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.routers.plex.tls=true"
+      - "traefik.http.routers.plex.service=plex"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+      - "traefik.http.services.plex.loadbalancer.server.scheme=http"

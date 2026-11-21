@@ -19,7 +19,7 @@ Docker services, all deployed with Docker Compose under `~/docker/<folder>`:
 | Traefik (reverse proxy, Let's Encrypt for `<public_domain>`) | `traefik` | port 443 |
 | qBittorrent | `qbittorrent` | `https://qb.<public_domain>` |
 | Vaultwarden | `vaultwarden` | `https://vw.<public_domain>` |
-| Plex | `plex` | host network, port 32400 |
+| Plex | `plex` | `https://plex.<public_domain>` |
 | Immich | `immich` | `https://immich.<public_domain>` |
 | Syncthing | `syncthing` | `https://sync.<public_domain>` |
 
@@ -233,7 +233,7 @@ A service left out of `docker_services` is stopped, its containers are removed w
 - its images are deleted (`docker_purge_images`)
 Service directories, secrets, databases, media libraries and named volumes are retained. Data deletion is handled only by [purge.yml](purge.yml); the old `docker_purge_data` setting is no longer used.
 
-Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Immich and Syncthing need `traefik`. Removal runs in reverse order (apps, then Traefik).
+Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Plex, Immich and Syncthing need `traefik`. Removal runs in reverse order (apps, then Traefik).
 
 Step CA is retired. Normal reconciliation removes its container, Compose file, certificate renewal unit, proxy TLS configuration, trust anchors and unused `step-cli` package. Existing CA data under `~/docker/step`, old certificates and files under `~/pki` are retained for manual recovery. Traefik uses only Let's Encrypt; its existing ACME storage is retained.
 
@@ -246,6 +246,18 @@ To add a service with a plain Docker Compose deployment:
 Deployment follows `docker_service_order`; removal reverses that order. Traefik keeps its specialized setup tasks. Selection and dependency checks run before Docker changes.
 
 To remove Docker, set `docker_enabled: false`. Reconciliation stops the managed services, disables Docker and its cleanup timer, and optionally removes its packages. All retained data survives.
+
+### Plex access
+
+Plex is served at `https://plex.<public_domain>/web` through Traefik and its existing Let's Encrypt wildcard certificate. Point the `plex.<public_domain>` DNS record at this server, as for the other services. Plex keeps host networking for LAN discovery; Traefik resolves `host.docker.internal` to Docker's host gateway and forwards requests to HTTP port 32400.
+
+To advertise this endpoint to Plex clients, open **Settings → Server → Network → Show Advanced → Custom server access URLs** and add `https://plex.<public_domain>:443`. See [Plex's network settings](https://support.plex.tv/articles/200430283-network/).
+
+Apply both Compose updates together:
+
+```bash
+/opt/nuc-ansible/venv/bin/ansible-playbook local.yml --tags traefik,plex
+```
 
 ## Explicit data purging
 

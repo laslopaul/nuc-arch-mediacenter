@@ -80,6 +80,45 @@ class ComposeTests(unittest.TestCase):
                         )
                     if name == "traefik":
                         self.assertNotIn("/certs", rendered)
+                        self.assertIn(
+                            "host.docker.internal:host-gateway",
+                            compose["services"]["traefik"]["extra_hosts"],
+                        )
+                    if name == "plex":
+                        plex = compose["services"]["plex"]
+                        self.assertEqual(plex["network_mode"], "host")
+                        labels = dict(
+                            label.split("=", 1) for label in plex["labels"]
+                        )
+                        self.assertEqual(labels["traefik.enable"], "true")
+                        self.assertEqual(
+                            labels["traefik.http.routers.plex.rule"],
+                            "Host(`plex.fixture.example`)",
+                        )
+                        self.assertEqual(
+                            labels["traefik.http.routers.plex.entrypoints"],
+                            "websecure",
+                        )
+                        self.assertEqual(
+                            labels["traefik.http.routers.plex.tls"], "true"
+                        )
+                        self.assertEqual(
+                            labels["traefik.http.routers.plex.service"], "plex"
+                        )
+                        self.assertEqual(
+                            labels[
+                                "traefik.http.services.plex."
+                                "loadbalancer.server.port"
+                            ],
+                            "32400",
+                        )
+                        self.assertEqual(
+                            labels[
+                                "traefik.http.services.plex."
+                                "loadbalancer.server.scheme"
+                            ],
+                            "http",
+                        )
                     if name in ["plex", "syncthing", "qbittorrent"]:
                         self.assertIn("PUID=1234", rendered)
                         self.assertIn("PGID=5678", rendered)
@@ -147,6 +186,8 @@ class CatalogTests(unittest.TestCase):
             cases = [
                 ([], True),
                 (["traefik"], True),
+                (["traefik", "plex"], True),
+                (["plex"], False),
                 (DEFAULTS["docker_service_order"], True),
                 (["qbittorrent"], False),
                 (["step-ca"], False),
@@ -366,6 +407,7 @@ class PlaybookTests(unittest.TestCase):
                 ("qb", ["qbittorrent"]),
                 ("vw", ["vaultwarden"]),
                 ("traefik", ["traefik"]),
+                ("plex", ["plex"]),
                 ("docker", list(CATALOG)),
             ]:
                 with self.subTest(tag=tag):

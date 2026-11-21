@@ -57,7 +57,7 @@ docker_service_catalog:
     project: plex
     volumes: []
     subdirectories: [config]
-    requires: []
+    requires: [traefik]
     template: plex-compose.yml.j2
     tag: plex
   immich:
