@@ -24,7 +24,6 @@ STATIC_IP="192.168.100.100/24"
 GATEWAY="192.168.100.1"
 DNS_1="9.9.9.9"
 DNS_2="149.112.112.112"
-ZEROTIER_NET_ID=
 # ===================================
 
 disk_setup() {
@@ -63,7 +62,7 @@ mkdir /mnt/boot
 mount "$EFI" /mnt/boot
 
 echo "==> Installing base system"
-pacstrap -K /mnt base linux linux-firmware intel-ucode intel-media-driver lvm2 cryptsetup exfatprogs iwd man-db man-pages grub efibootmgr vim htop mc uv git openssh zerotier-one fastfetch
+pacstrap -K /mnt base linux linux-firmware intel-ucode intel-media-driver lvm2 cryptsetup exfatprogs iwd man-db man-pages grub efibootmgr vim htop mc uv git openssh fastfetch
 
 echo "==> Generating fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -105,11 +104,6 @@ Gateway=$GATEWAY
 DNS=$DNS_1
 DNS=$DNS_2
 END
-
-echo "==> Configuring Zerotier Network"
-zerotier-cli join $ZEROTIER_NET_ID
-ZEROTIER_DEV_ID=$(zerotier-cli list-networks | tail -n +2 | cut -f3 -d' ')
-echo "Now you should authorize your device id $ZEROTIER_DEV_ID in the Zerotier Central"
 
 echo "==> Configuring initramfs for LVM"
 sed -i 's/block filesystems/block lvm2 filesystems/' /etc/mkinitcpio.conf
