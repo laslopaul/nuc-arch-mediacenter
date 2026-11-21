@@ -1,6 +1,6 @@
 ---
 - name: Update CA trust
-  ansible.builtin.command: update-ca-trust
+  ansible.builtin.command: update-ca-trust extract
   changed_when: true
 
 - name: Reload Docker systemd units

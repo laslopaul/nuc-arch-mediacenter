@@ -43,34 +43,51 @@
     path: "{{ docker_path }}/step/data/certs/root_ca.crt"
   register: docker_legacy_ca
 
-- name: Check whether the retired root is still trusted
+- name: Read the retained CA fingerprint
   ansible.builtin.command:
-    argv:
-      - openssl
-      - verify
-      - -no_check_time
-      - -CAfile
-      - /etc/ssl/certs/ca-certificates.crt
-      - "{{ docker_legacy_ca.stat.path }}"
-  register: docker_legacy_ca_verify
+    argv: [openssl, x509, -in, "{{ docker_legacy_ca.stat.path }}", -noout, -fingerprint, -sha256]
+  register: docker_legacy_ca_fingerprint
   changed_when: false
-  failed_when: docker_legacy_ca_verify.rc not in [0, 2]
   check_mode: false
   when: docker_legacy_ca.stat.exists
 
-- name: Remove the retired root from the trust store
-  ansible.builtin.command:
-    argv: [trust, anchor, --remove, "{{ docker_legacy_ca.stat.path }}"]
-  changed_when: true
-  when:
-    - docker_legacy_ca.stat.exists
-    - docker_legacy_ca_verify.rc == 0
-  notify: Update CA trust
+- name: Identify the retired CA
+  ansible.builtin.set_fact:
+    # The fallback identifies this repo's original CA if its retained data is gone.
+    docker_legacy_ca_digest: >-
+      {{ docker_legacy_ca_fingerprint.stdout
+         | default('cb8e704102547f8a85f656a6419a5c7c3ae93a7ef5eda3bb1504f6a31acd8a9c')
+         | regex_replace('^.*=', '') | replace(':', '') | lower | trim }}
 
-- name: Remove the managed CA trust anchor
+- name: Find the local anchors created by the retired CA setup
+  ansible.builtin.find:
+    paths: /etc/ca-certificates/trust-source/anchors
+    patterns: [nuc-step-ca.crt, 'nuc-server.lan_*.crt']
+    file_type: file
+  register: docker_legacy_ca_anchors
+
+- name: Read local anchor fingerprints
+  ansible.builtin.command:
+    argv: [openssl, x509, -in, "{{ item.path }}", -noout, -fingerprint, -sha256]
+  loop: "{{ docker_legacy_ca_anchors.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  register: docker_legacy_anchor_fingerprints
+  changed_when: false
+  check_mode: false
+
+# File-backed p11-kit anchors are read-only through `trust anchor --remove`.
+# Remove matching source files and let update-ca-trust regenerate the bundles.
+- name: Remove matching retired CA anchor files
   ansible.builtin.file:
-    path: /etc/ca-certificates/trust-source/anchors/nuc-step-ca.crt
+    path: "{{ item.item.path }}"
     state: absent
+  loop: "{{ docker_legacy_anchor_fingerprints.results }}"
+  loop_control:
+    label: "{{ item.item.path }}"
+  when: >-
+    (item.stdout | regex_replace('^.*=', '') | replace(':', '') | lower | trim)
+    == docker_legacy_ca_digest
   notify: Update CA trust
 
 - name: Remove the obsolete CA CLI when no other package needs it
