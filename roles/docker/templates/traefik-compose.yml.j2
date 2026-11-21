@@ -16,9 +16,6 @@ services:
       - "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/traefik.yml:/etc/traefik/traefik.yml:ro"
       - "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/dynamic:/etc/traefik/dynamic"
       - "{{ docker_path }}/{{ docker_service_catalog['traefik'].directory }}/letsencrypt:/letsencrypt"
-    # Docker provider uses this address for host-networked services like Plex.
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - traefik
 

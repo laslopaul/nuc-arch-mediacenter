@@ -1,0 +1,17 @@
+---
+# Retain Plex metadata and media; Jellyfin starts with its own configuration.
+- name: Check for the Docker socket before retiring Plex
+  ansible.builtin.stat:
+    path: /var/run/docker.sock
+  register: docker_legacy_plex_socket
+
+- name: Remove the retired Plex container
+  community.docker.docker_container:
+    name: plex
+    state: absent
+  when: docker_legacy_plex_socket.stat.exists
+
+- name: Remove the retired Plex Compose file
+  ansible.builtin.file:
+    path: "{{ docker_path }}/plex/docker-compose.yml"
+    state: absent

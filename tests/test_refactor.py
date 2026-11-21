@@ -80,46 +80,59 @@ class ComposeTests(unittest.TestCase):
                         )
                     if name == "traefik":
                         self.assertNotIn("/certs", rendered)
-                        self.assertIn(
-                            "host.docker.internal:host-gateway",
-                            compose["services"]["traefik"]["extra_hosts"],
+                        self.assertNotIn(
+                            "extra_hosts", compose["services"]["traefik"]
                         )
-                    if name == "plex":
-                        plex = compose["services"]["plex"]
-                        self.assertEqual(plex["network_mode"], "host")
+                    if name == "jellyfin":
+                        jellyfin = compose["services"]["jellyfin"]
+                        self.assertNotIn("network_mode", jellyfin)
+                        self.assertNotIn("ports", jellyfin)
+                        self.assertEqual(
+                            jellyfin["networks"], ["traefik_traefik"]
+                        )
+                        self.assertIn(
+                            "/srv/media/Movies:/movies:ro", jellyfin["volumes"]
+                        )
+                        self.assertIn(
+                            "/srv/media/Shows:/tv:ro", jellyfin["volumes"]
+                        )
+                        self.assertIn("/dev/dri:/dev/dri", jellyfin["devices"])
                         labels = dict(
-                            label.split("=", 1) for label in plex["labels"]
+                            label.split("=", 1) for label in jellyfin["labels"]
                         )
                         self.assertEqual(labels["traefik.enable"], "true")
                         self.assertEqual(
-                            labels["traefik.http.routers.plex.rule"],
-                            "Host(`plex.fixture.example`)",
+                            labels["traefik.http.routers.jellyfin.rule"],
+                            "Host(`jellyfin.fixture.example`)",
                         )
                         self.assertEqual(
-                            labels["traefik.http.routers.plex.entrypoints"],
+                            labels[
+                                "traefik.http.routers.jellyfin.entrypoints"
+                            ],
                             "websecure",
                         )
                         self.assertEqual(
-                            labels["traefik.http.routers.plex.tls"], "true"
+                            labels["traefik.http.routers.jellyfin.tls"], "true"
                         )
                         self.assertEqual(
-                            labels["traefik.http.routers.plex.service"], "plex"
+                            labels["traefik.http.routers.jellyfin.service"],
+                            "jellyfin",
                         )
                         self.assertEqual(
                             labels[
-                                "traefik.http.services.plex."
+                                "traefik.http.services.jellyfin."
                                 "loadbalancer.server.port"
                             ],
-                            "32400",
+                            "8096",
                         )
                         self.assertEqual(
                             labels[
-                                "traefik.http.services.plex."
+                                "traefik.http.services.jellyfin."
                                 "loadbalancer.server.scheme"
                             ],
                             "http",
                         )
-                    if name in ["plex", "syncthing", "qbittorrent"]:
+                    if name in ["jellyfin", "syncthing", "qbittorrent"]:
                         self.assertIn("PUID=1234", rendered)
                         self.assertIn("PGID=5678", rendered)
 
@@ -186,7 +199,8 @@ class CatalogTests(unittest.TestCase):
             cases = [
                 ([], True),
                 (["traefik"], True),
-                (["traefik", "plex"], True),
+                (["traefik", "jellyfin"], True),
+                (["jellyfin"], False),
                 (["plex"], False),
                 (DEFAULTS["docker_service_order"], True),
                 (["qbittorrent"], False),
@@ -382,7 +396,8 @@ class PlaybookTests(unittest.TestCase):
                     )
                 )
             (tasks / "migrations").mkdir()
-            (tasks / "migrations/step-ca.yml").write_text("---\n[]\n")
+            for name in ["step-ca.yml", "plex.yml"]:
+                (tasks / "migrations" / name).write_text("---\n[]\n")
             for name in ["install.yml", "remove.yml"]:
                 (tasks / name).write_text("---\n[]\n")
             identity = directory / "roles/user_identity/tasks"
@@ -407,7 +422,7 @@ class PlaybookTests(unittest.TestCase):
                 ("qb", ["qbittorrent"]),
                 ("vw", ["vaultwarden"]),
                 ("traefik", ["traefik"]),
-                ("plex", ["plex"]),
+                ("jellyfin", ["jellyfin"]),
                 ("docker", list(CATALOG)),
             ]:
                 with self.subTest(tag=tag):

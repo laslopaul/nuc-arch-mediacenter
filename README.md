@@ -19,7 +19,7 @@ Docker services, all deployed with Docker Compose under `~/docker/<folder>`:
 | Traefik (reverse proxy, Let's Encrypt for `<public_domain>`) | `traefik` | port 443 |
 | qBittorrent | `qbittorrent` | `https://qb.<public_domain>` |
 | Vaultwarden | `vaultwarden` | `https://vw.<public_domain>` |
-| Plex | `plex` | `https://plex.<public_domain>` |
+| Jellyfin | `jellyfin` | `https://jellyfin.<public_domain>` |
 | Immich | `immich` | `https://immich.<public_domain>` |
 | Syncthing | `syncthing` | `https://sync.<public_domain>` |
 
@@ -112,7 +112,7 @@ Roles and components retain their existing tags, including `qb` and `vw`:
 | --- | --- |
 | `base` | `base`, `ipv6`, `ansible-pull`, `user`, `netbird`, `udev-media-automount`, `pipewire`, `reflector` |
 | `gui` | `gui`, `gui-install`, `gui-config`, `gui-remove` |
-| `docker` | `docker`, `docker-install`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing`, `docker-remove` |
+| `docker` | `docker`, `docker-install`, `traefik`, `qb`, `vw`, `jellyfin`, `immich`, `syncthing`, `docker-remove` |
 
 ## Configuration
 
@@ -221,7 +221,7 @@ docker_services:
   - traefik
   - qbittorrent
   - vaultwarden
-  - plex
+  - jellyfin
   - immich
   - syncthing
 docker_purge_images: true
@@ -233,7 +233,7 @@ A service left out of `docker_services` is stopped, its containers are removed w
 - its images are deleted (`docker_purge_images`)
 Service directories, secrets, databases, media libraries and named volumes are retained. Data deletion is handled only by [purge.yml](purge.yml); the old `docker_purge_data` setting is no longer used.
 
-Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Plex, Immich and Syncthing need `traefik`. Removal runs in reverse order (apps, then Traefik).
+Services are checked for dependencies before anything is changed: qBittorrent, Vaultwarden, Jellyfin, Immich and Syncthing need `traefik`. Removal runs in reverse order (apps, then Traefik).
 
 Step CA is retired. Normal reconciliation removes its container, Compose file, certificate renewal unit, proxy TLS configuration, trust anchors and unused `step-cli` package. Existing CA data under `~/docker/step`, old certificates and files under `~/pki` are retained for manual recovery. Traefik uses only Let's Encrypt; its existing ACME storage is retained.
 
@@ -247,17 +247,21 @@ Deployment follows `docker_service_order`; removal reverses that order. Traefik 
 
 To remove Docker, set `docker_enabled: false`. Reconciliation stops the managed services, disables Docker and its cleanup timer, and optionally removes its packages. All retained data survives.
 
-### Plex access
+### Jellyfin access
 
-Plex is served at `https://plex.<public_domain>/web` through Traefik and its existing Let's Encrypt wildcard certificate. Point the `plex.<public_domain>` DNS record at this server, as for the other services. Plex keeps host networking for LAN discovery; Traefik resolves `host.docker.internal` to Docker's host gateway and forwards requests to HTTP port 32400.
+Jellyfin is served at `https://jellyfin.<public_domain>` through Traefik and its existing Let's Encrypt wildcard certificate. It uses the shared Docker network with no published application or discovery ports. For access through NetBird, configure DNS so this hostname resolves to the server's NetBird IP on your clients, and allow TCP 443 in your NetBird policy. This does not restrict Traefik's other listening interfaces; enforce VPN-only access through your network/firewall policy if needed.
 
-To advertise this endpoint to Plex clients, open **Settings → Server → Network → Show Advanced → Custom server access URLs** and add `https://plex.<public_domain>:443`. See [Plex's network settings](https://support.plex.tv/articles/200430283-network/).
-
-Apply both Compose updates together:
+Apply the replacement and proxy update together:
 
 ```bash
-/opt/nuc-ansible/venv/bin/ansible-playbook local.yml --tags traefik,plex
+/opt/nuc-ansible/venv/bin/ansible-playbook local.yml --tags traefik,jellyfin
 ```
+
+Open the URL and complete the initial setup wizard. Add Movies from `/movies` and TV Shows from `/tv`. Media mounts are read-only. Configuration and metadata are stored separately in `~/docker/jellyfin/config`. Enable the appropriate Intel Quick Sync or VA-API acceleration under **Dashboard → Playback → Transcoding**; `/dev/dri` is passed through to the container. See the [container documentation](https://docs.linuxserver.io/images/docker-jellyfin/).
+
+In **Dashboard → Networking → Known Proxies**, add Traefik's container IP (obtain it with `docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' traefik`). Update it if recreating Traefik changes that address. Keep remote connections enabled for NetBird clients; Jellyfin requires the proxy to be trusted before using forwarded client addresses. See [Jellyfin's reverse proxy documentation](https://jellyfin.org/docs/general/post-install/networking/reverse-proxy/).
+
+Normal reconciliation removes the retired Plex container and Compose file, retaining `~/docker/plex/config` and all media. Plex users, libraries and watch history are not imported into Jellyfin. If you override `docker_services` or `docker_service_order`, replace `plex` with `jellyfin` there too.
 
 ## Explicit data purging
 
@@ -273,7 +277,7 @@ Purging permanently deletes the selected app profiles or service directory, incl
 To delete **all** Docker engine storage, including unmanaged containers, images and volumes, first apply `docker_enabled: false`, then explicitly select every service and engine storage:
 
 ```bash
-/opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["traefik", "qbittorrent", "vaultwarden", "plex", "immich", "syncthing"], "purge_docker_engine_data": true}'
+/opt/nuc-ansible/venv/bin/ansible-playbook purge.yml -e '{"purge_docker_targets": ["traefik", "qbittorrent", "vaultwarden", "jellyfin", "immich", "syncthing"], "purge_docker_engine_data": true}'
 ```
 
 No targets are selected by default. Enabled components cannot be purged. Purging does not delete `media_path`. Inspect planned deletions with `--check --diff` before running the command without check mode.

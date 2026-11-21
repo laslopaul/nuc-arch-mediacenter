@@ -24,6 +24,10 @@
   ansible.builtin.import_tasks: migrations/step-ca.yml
   tags: [traefik, docker-remove]
 
+- name: Remove retired Plex deployment
+  ansible.builtin.import_tasks: migrations/plex.yml
+  tags: [jellyfin, docker-remove]
+
 # Always visit the includes so --tags qb / vw etc. reach their children.
 - name: Deploy selected Docker services in order
   ansible.builtin.include_tasks:
