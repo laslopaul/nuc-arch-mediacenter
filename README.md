@@ -8,7 +8,7 @@ The machine configures itself with `ansible-pull`: a systemd timer pulls this re
 
 | Role | What it sets up |
 | --- | --- |
-| `base` | IPv6 disabled, `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: removable drive automounting with udev-media-automount, PipeWire audio, reflector mirrorlist refresh |
+| `base` | NetBird headless client, IPv6 disabled, `ansible-pull` timer, `kodi` user (sudo, SSH key, tty1 autologin, Polkit power rules), and optional components: removable drive automounting with udev-media-automount, PipeWire audio, reflector mirrorlist refresh |
 | `gui` | labwc (Wayland) or i3 (Xorg) desktop, plus optional apps: Kodi, Firefox, Alacritty |
 | `docker` | Docker with a weekly image cleanup timer, and optional services: |
 
@@ -33,12 +33,12 @@ Docker services, all deployed with Docker Compose under `~/docker/<folder>`:
 3. Run the script:
 
    ```bash
-   ROOT_PASSWORD="mypassword" ZEROTIER_NET_ID="8056c2e21c000001" bash scripts/arch-install.sh
+   ROOT_PASSWORD="mypassword" bash scripts/arch-install.sh
    ```
 
-4. Authorize the device ID printed by the script in Zerotier Central, then reboot.
+4. Reboot, then apply the Ansible configuration below.
 
-The script installs the base system with LVM, GRUB (UEFI), systemd-networkd with a static IP, Zerotier, and Ansible itself.
+The script installs the base system with LVM, GRUB (UEFI), systemd-networkd with a static IP, OpenSSH, Git, and uv for bootstrapping Ansible. NetBird is installed by the base role.
 
 ## Apply configuration
 
@@ -110,7 +110,7 @@ Roles and components retain their existing tags, including `qb` and `vw`:
 
 | Role | Tags |
 | --- | --- |
-| `base` | `base`, `ipv6`, `ansible-pull`, `user`, `udev-media-automount`, `pipewire`, `reflector` |
+| `base` | `base`, `ipv6`, `ansible-pull`, `user`, `netbird`, `udev-media-automount`, `pipewire`, `reflector` |
 | `gui` | `gui`, `gui-install`, `gui-config`, `gui-remove` |
 | `docker` | `docker`, `docker-install`, `traefik`, `qb`, `vw`, `plex`, `immich`, `syncthing`, `docker-remove` |
 
@@ -131,6 +131,24 @@ Role defaults, which can be overridden in `group_vars/all.yml`:
 - [roles/base/defaults/main.yml](roles/base/defaults/main.yml): SSH public key, repo URL, components, reflector mirror settings
 - [roles/gui/defaults/main.yml](roles/gui/defaults/main.yml): desktop, apps and their packages & config paths
 - [roles/docker/defaults/main.yml](roles/docker/defaults/main.yml): services, their folders & dependencies, Docker image versions, timezone
+
+### NetBird
+
+The base role installs the headless client from the official `netbirdio/netbird` release archive, verifies its published SHA-256 checksum, installs the native service unit if missing, and enables `netbird.service`. The existing unit and enrollment state are preserved. The pinned `netbird_version` in base defaults controls upgrades; a binary update restarts the service. NetBird is a core base task, independent of `base_components`.
+
+On a new machine, enroll it once after applying the playbook:
+
+```bash
+sudo netbird up
+```
+
+For headless enrollment, use `sudo netbird up --setup-key <setup-key>`; add `--management-url <url>` for a self-hosted management server. Keep setup keys out of this repository. Subsequent Ansible runs manage installation and the service without re-enrolling the peer. See the [NetBird CLI documentation](https://docs.netbird.io/get-started/cli).
+
+To manage only the client installation:
+
+```bash
+/opt/nuc-ansible/venv/bin/ansible-playbook local.yml --tags netbird
+```
 
 ### Selecting base components
 

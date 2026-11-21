@@ -1,0 +1,88 @@
+---
+- name: Validate NetBird architecture
+  ansible.builtin.assert:
+    that: ansible_architecture in ['x86_64', 'aarch64']
+    fail_msg: "NetBird binary installation does not support {{ ansible_architecture }}"
+
+- name: Check for the NetBird binary
+  ansible.builtin.stat:
+    path: "{{ netbird_binary_path }}"
+  register: netbird_binary
+
+- name: Read the installed NetBird version
+  ansible.builtin.command:
+    argv: ["{{ netbird_binary_path }}", version]
+  register: netbird_installed_version
+  changed_when: false
+  check_mode: false
+  when: netbird_binary.stat.exists
+
+- name: Install the pinned NetBird client
+  vars:
+    netbird_release_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_architecture] }}"
+    netbird_release_dir: "{{ netbird_cache_dir }}/{{ netbird_version }}-{{ netbird_release_arch }}"
+    netbird_archive_name: "netbird_{{ netbird_version }}_linux_{{ netbird_release_arch }}.tar.gz"
+    netbird_release_url: "https://github.com/netbirdio/netbird/releases/download/v{{ netbird_version }}"
+  when: not netbird_binary.stat.exists or netbird_installed_version.stdout | default('') | trim != netbird_version
+  block:
+    - name: Install NetBird archive dependencies
+      community.general.pacman:
+        name: [ca-certificates, tar, gzip]
+        state: present
+        update_cache: true
+
+    - name: Create the NetBird release cache
+      ansible.builtin.file:
+        path: "{{ netbird_release_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Download the verified NetBird archive
+      ansible.builtin.get_url:
+        url: "{{ netbird_release_url }}/{{ netbird_archive_name }}"
+        dest: "{{ netbird_release_dir }}/{{ netbird_archive_name }}"
+        checksum: "sha256:{{ netbird_release_url }}/netbird_{{ netbird_version }}_checksums.txt"
+        owner: root
+        group: root
+        mode: "0644"
+      when: not ansible_check_mode
+
+    - name: Extract the NetBird client
+      ansible.builtin.unarchive:
+        src: "{{ netbird_release_dir }}/{{ netbird_archive_name }}"
+        dest: "{{ netbird_release_dir }}"
+        remote_src: true
+        creates: "{{ netbird_release_dir }}/netbird"
+      when: not ansible_check_mode
+
+    - name: Install the NetBird binary
+      ansible.builtin.copy:
+        src: "{{ netbird_release_dir }}/netbird"
+        dest: "{{ netbird_binary_path }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+      when: not ansible_check_mode
+      notify: Restart NetBird
+
+- name: Check for the NetBird service unit
+  ansible.builtin.stat:
+    path: /etc/systemd/system/netbird.service
+  register: netbird_unit
+
+- name: Install the NetBird service unit when missing
+  ansible.builtin.command:
+    argv: ["{{ netbird_binary_path }}", service, install]
+    creates: /etc/systemd/system/netbird.service
+  register: netbird_service_install
+
+- name: Enable and start NetBird
+  ansible.builtin.systemd:
+    name: netbird.service
+    state: started
+    enabled: true
+    daemon_reload: "{{ netbird_service_install is changed }}"
+  when: not ansible_check_mode or netbird_unit.stat.exists

@@ -23,3 +23,8 @@
 - name: Reload automount udev rules
   ansible.builtin.command: udevadm control --reload-rules
   changed_when: true
+
+- name: Restart NetBird
+  ansible.builtin.systemd:
+    name: netbird.service
+    state: restarted

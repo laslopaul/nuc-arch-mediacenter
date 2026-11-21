@@ -45,3 +45,8 @@ reflector_download_timeout: 5
 media_automount_repo: https://github.com/Ferk/udev-media-automount.git
 media_automount_revision: efca3c5a0548211c84e98de16b41641a961b6273
 media_automount_source_dir: /usr/local/src/udev-media-automount
+
+# Headless NetBird client, installed from official release archives.
+netbird_version: "0.83.2"
+netbird_binary_path: /usr/bin/netbird
+netbird_cache_dir: /var/cache/netbird

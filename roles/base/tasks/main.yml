@@ -26,6 +26,10 @@
       tags: always
   tags: always
 
+- name: Install and enable NetBird
+  ansible.builtin.import_tasks: netbird/present.yml
+  tags: netbird
+
 - name: Configure udev-media-automount
   ansible.builtin.import_tasks: automount/present.yml
   when: "'udev-media-automount' in base_components"
