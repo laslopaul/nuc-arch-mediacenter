@@ -2,7 +2,8 @@ services:
   plex:
     image: {{ images['plex'] }}
     container_name: plex
-    network_mode: host
+    networks:
+      - traefik_traefik
     environment:
       - PUID={{ managed_user_uid }}
       - PGID={{ managed_user_gid }}
@@ -23,3 +24,8 @@ services:
       - "traefik.http.routers.plex.service=plex"
       - "traefik.http.services.plex.loadbalancer.server.port=32400"
       - "traefik.http.services.plex.loadbalancer.server.scheme=http"
+      - "traefik.docker.network=traefik_traefik"
+
+networks:
+  traefik_traefik:
+    external: true
