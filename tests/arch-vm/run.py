@@ -28,7 +28,11 @@ def apply(playbook, extra=None, unchanged=False):
     if extra:
         command += ["-e", json.dumps(extra)]
     result = subprocess.run(
-        command, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        command,
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
     )
     print(result.stdout, flush=True)
     if result.returncode:
@@ -41,7 +45,11 @@ def apply(playbook, extra=None, unchanged=False):
 
 apply("tests/arch-vm/prepare.yml")
 apply("tests/arch-vm/converge.yml", {"gui_components": ["alacritty"]})
-apply("tests/arch-vm/converge.yml", {"gui_components": ["alacritty"]}, unchanged=True)
+apply(
+    "tests/arch-vm/converge.yml",
+    {"gui_components": ["alacritty"]},
+    unchanged=True,
+)
 apply("tests/arch-vm/converge.yml")
 apply("tests/arch-vm/converge.yml", unchanged=True)
 apply("tests/arch-vm/verify.yml")

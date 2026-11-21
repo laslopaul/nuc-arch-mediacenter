@@ -7,7 +7,9 @@ import shutil
 import sys
 from pathlib import Path
 
-INSTALLATION = re.compile(r"(?:cpython|pypy)-\d+\.\d+(?:\.\d+)?(?:[a-z]\d+)?[-+].+")
+INSTALLATION = re.compile(
+    r"(?:cpython|pypy)-\d+\.\d+(?:\.\d+)?(?:[a-z]\d+)?[-+].+"
+)
 
 
 def obsolete_installations(runtime_dir, running_executable):
@@ -21,7 +23,8 @@ def obsolete_installations(runtime_dir, running_executable):
         raise ValueError("Run cleanup using this runtime's venv/bin/python.")
     if not active.is_relative_to(store):
         raise ValueError(
-            "The active Python is not in this runtime's managed Python directory."
+            "The active Python is not in this runtime's "
+            "managed Python directory."
         )
 
     candidates = []
@@ -57,7 +60,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("runtime_dir", type=Path)
     parser.add_argument(
-        "--dry-run", action="store_true", help="List candidates without deleting files."
+        "--dry-run",
+        action="store_true",
+        help="List candidates without deleting files.",
     )
     args = parser.parse_args()
     try:

@@ -50,7 +50,10 @@ class CAMigrationTests(unittest.TestCase):
             unrelated = self.certificate(directory, "unrelated")
             anchors = directory / "anchors"
             anchors.mkdir()
-            matching = [anchors / "nuc-step-ca.crt", anchors / "nuc-server.lan_123.crt"]
+            matching = [
+                anchors / "nuc-step-ca.crt",
+                anchors / "nuc-server.lan_123.crt",
+            ]
             for anchor in matching:
                 shutil.copyfile(root, anchor)
                 anchor.chmod(0o444)
@@ -64,10 +67,14 @@ class CAMigrationTests(unittest.TestCase):
             tools = directory / "tools"
             tools.mkdir()
             trust = tools / "trust"
-            trust.write_text("#!/bin/sh\necho 'read-only certificate' >&2\nexit 1\n")
+            trust.write_text(
+                "#!/bin/sh\necho 'read-only certificate' >&2\nexit 1\n"
+            )
             trust.chmod(0o755)
             tasks = yaml.safe_load(
-                (ROOT / "roles/docker/tasks/migrations/step-ca.yml").read_text()
+                (
+                    ROOT / "roles/docker/tasks/migrations/step-ca.yml"
+                ).read_text()
             )
             start = next(
                 i
@@ -91,7 +98,9 @@ class CAMigrationTests(unittest.TestCase):
                     "handlers": [
                         {
                             "name": "Update CA trust",
-                            "ansible.builtin.debug": {"msg": "trust store rebuilt"},
+                            "ansible.builtin.debug": {
+                                "msg": "trust store rebuilt"
+                            },
                         }
                     ],
                 }
@@ -125,5 +134,7 @@ class CAMigrationTests(unittest.TestCase):
             second = subprocess.run(
                 command, env=environment, text=True, capture_output=True
             )
-            self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+            self.assertEqual(
+                second.returncode, 0, second.stdout + second.stderr
+            )
             self.assertNotIn("trust store rebuilt", second.stdout)

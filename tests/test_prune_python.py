@@ -23,8 +23,12 @@ class PrunePythonTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name) / "runtime"
         self.store = self.root / "python"
-        self.active = self.install("cpython-3.15.0-linux-x86_64-gnu", "python3.15")
-        self.old = self.install("cpython-3.13.16-linux-x86_64-gnu", "python3.13")
+        self.active = self.install(
+            "cpython-3.15.0-linux-x86_64-gnu", "python3.15"
+        )
+        self.old = self.install(
+            "cpython-3.13.16-linux-x86_64-gnu", "python3.13"
+        )
         self.active_alias = self.store / "cpython-3.15-linux-x86_64-gnu"
         self.active_alias.symlink_to(self.active)
         self.old_alias = self.store / "cpython-3.13-linux-x86_64-gnu"

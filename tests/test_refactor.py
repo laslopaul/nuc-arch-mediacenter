@@ -14,7 +14,9 @@ import yaml
 from jinja2 import Environment, StrictUndefined
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULTS = yaml.safe_load((ROOT / "roles/docker/defaults/main.yml").read_text())
+DEFAULTS = yaml.safe_load(
+    (ROOT / "roles/docker/defaults/main.yml").read_text()
+)
 CATALOG = DEFAULTS["docker_service_catalog"]
 
 
@@ -40,11 +42,17 @@ class ComposeTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
-            shutil.copy(ROOT / "tests/fixtures/compose.env", directory / ".env")
+            shutil.copy(
+                ROOT / "tests/fixtures/compose.env", directory / ".env"
+            )
             for name, service in CATALOG.items():
                 with self.subTest(service=name):
-                    source = ROOT / "roles/docker/templates" / service["template"]
-                    rendered = env.from_string(source.read_text()).render(**variables)
+                    source = (
+                        ROOT / "roles/docker/templates" / service["template"]
+                    )
+                    rendered = env.from_string(source.read_text()).render(
+                        **variables
+                    )
                     path = directory / "docker-compose.yml"
                     path.write_text(rendered)
                     result = run(
@@ -67,7 +75,9 @@ class ComposeTests(unittest.TestCase):
                                 self.assertEqual(label.count("Host("), 1)
                                 self.assertIn(".fixture.example`)", label)
                     if name == "vaultwarden":
-                        self.assertIn("DOMAIN=https://vw.fixture.example", rendered)
+                        self.assertIn(
+                            "DOMAIN=https://vw.fixture.example", rendered
+                        )
                     if name == "traefik":
                         self.assertNotIn("/certs", rendered)
                     if name in ["plex", "syncthing", "qbittorrent"]:
@@ -78,7 +88,9 @@ class ComposeTests(unittest.TestCase):
         env = Environment(undefined=StrictUndefined)
         for desktop in ["i3", "labwc"]:
             filename = "config" if desktop == "i3" else "autostart"
-            source = ROOT / f"roles/gui/templates/.config/{desktop}/{filename}.j2"
+            source = (
+                ROOT / f"roles/gui/templates/.config/{desktop}/{filename}.j2"
+            )
             rendered = env.from_string(source.read_text()).render(
                 gui_components=[], base_components=[]
             )
@@ -98,13 +110,19 @@ class CatalogTests(unittest.TestCase):
         order = DEFAULTS["docker_service_order"]
         self.assertEqual(set(order), set(CATALOG))
         self.assertEqual(len(order), len(set(order)))
-        self.assertEqual(len(CATALOG), len({v["directory"] for v in CATALOG.values()}))
-        self.assertEqual(len(CATALOG), len({v["tag"] for v in CATALOG.values()}))
+        self.assertEqual(
+            len(CATALOG), len({v["directory"] for v in CATALOG.values()})
+        )
+        self.assertEqual(
+            len(CATALOG), len({v["tag"] for v in CATALOG.values()})
+        )
         for name, entry in CATALOG.items():
             self.assertTrue(
                 (ROOT / "roles/docker/templates" / entry["template"]).is_file()
             )
-            self.assertTrue(set(entry["requires"]) <= set(order[: order.index(name)]))
+            self.assertTrue(
+                set(entry["requires"]) <= set(order[: order.index(name)])
+            )
 
     def test_ansible_dependency_validation(self):
         executable = shutil.which("ansible-playbook")
@@ -145,12 +163,17 @@ class CatalogTests(unittest.TestCase):
                         str(path),
                         "-e",
                         json.dumps(
-                            {"docker_services": selected, "docker_selected": selected}
+                            {
+                                "docker_services": selected,
+                                "docker_selected": selected,
+                            }
                         ),
                         cwd=ROOT,
                     )
                     self.assertEqual(
-                        result.returncode == 0, valid, result.stdout + result.stderr
+                        result.returncode == 0,
+                        valid,
+                        result.stdout + result.stderr,
                     )
 
 
@@ -167,7 +190,10 @@ if args == ['-Qq']:
 elif args == ['-Qqt']:
     if os.environ.get('QUERY_FAIL'):
         sys.exit(7)
-    leaves = [p for p in packages if not any(p in deps for deps in packages.values())]
+    leaves = [
+        p for p in packages
+        if not any(p in deps for deps in packages.values())
+    ]
     if leaves:
         print('\\n'.join(leaves))
     else:
@@ -185,7 +211,9 @@ else:
 
 
 class CleanupTests(unittest.TestCase):
-    def exercise(self, packages, candidates, protected=(), mode="apply", **extra_env):
+    def exercise(
+        self, packages, candidates, protected=(), mode="apply", **extra_env
+    ):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
             pacman = directory / "pacman"
@@ -200,10 +228,14 @@ class CleanupTests(unittest.TestCase):
                 **extra_env,
             )
             arguments = list(
-                itertools.chain.from_iterable(("--protect", p) for p in protected)
+                itertools.chain.from_iterable(
+                    ("--protect", p) for p in protected
+                )
             )
             arguments += list(
-                itertools.chain.from_iterable(("--candidate", p) for p in candidates)
+                itertools.chain.from_iterable(
+                    ("--candidate", p) for p in candidates
+                )
             )
             result = run(
                 "bash",
@@ -236,7 +268,9 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(set(remaining), {"i3", "ttf-hack", "protected"})
 
-    def test_reverse_dependencies_are_preserved_without_explicit_protection(self):
+    def test_reverse_dependencies_are_preserved_without_explicit_protection(
+        self,
+    ):
         result, remaining = self.exercise(
             {"i3": ["ttf-hack"], "ttf-hack": []}, ["ttf-hack"]
         )
@@ -257,7 +291,9 @@ class CleanupTests(unittest.TestCase):
 
     def test_query_and_removal_errors_fail(self):
         for environment in [{"QUERY_FAIL": "1"}, {"REMOVE_FAIL": "1"}]:
-            result, remaining = self.exercise({"app": []}, ["app"], **environment)
+            result, remaining = self.exercise(
+                {"app": []}, ["app"], **environment
+            )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("app", remaining)
 
@@ -265,17 +301,22 @@ class CleanupTests(unittest.TestCase):
 class PlaybookTests(unittest.TestCase):
     def test_purge_playbook_only_loads_purge_tasks(self):
         result = run(
-            "ansible-playbook", str(ROOT / "purge.yml"), "--list-tasks", cwd=ROOT
+            "ansible-playbook",
+            str(ROOT / "purge.yml"),
+            "--list-tasks",
+            cwd=ROOT,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Purge explicitly selected GUI user data", result.stdout)
-        self.assertIn("Purge explicitly selected Docker service data", result.stdout)
+        self.assertIn(
+            "Purge explicitly selected Docker service data", result.stdout
+        )
         self.assertNotIn("Install selected desktop", result.stdout)
         self.assertNotIn("Install Docker", result.stdout)
         self.assertNotIn("Launch", result.stdout)
 
     def test_docker_tags_reach_only_requested_deployments(self):
-        # Stub only leaf operations; execute the real catalog, dependency checks,
+        # Stub leaf operations; run the real catalog, dependency checks,
         # dispatch loop and nested includes. No Docker or host changes occur.
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
@@ -290,7 +331,10 @@ class PlaybookTests(unittest.TestCase):
                             {
                                 "name": "Record deployment",
                                 "ansible.builtin.debug": {
-                                    "msg": "DEPLOY_SERVICE={{ docker_service }}"
+                                    "msg": (
+                                        "DEPLOY_SERVICE="
+                                        "{{ docker_service }}"
+                                    )
                                 },
                             }
                         ]
@@ -376,7 +420,9 @@ class PlaybookTests(unittest.TestCase):
                 json.dumps(variables),
                 cwd=ROOT,
             )
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(
+                result.returncode, 0, result.stdout + result.stderr
+            )
             self.assertTrue(sentinel.is_file())
             variables["gui_components"] = ["firefox"]
             result = run(
@@ -389,7 +435,9 @@ class PlaybookTests(unittest.TestCase):
                 json.dumps(variables),
                 cwd=ROOT,
             )
-            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertNotEqual(
+                result.returncode, 0, result.stdout + result.stderr
+            )
             self.assertIn("Disable targets with local.yml", result.stdout)
             self.assertTrue(sentinel.is_file())
 

@@ -1,4 +1,4 @@
-"""Check bootstrap's shared interpreter setup without downloading dependencies."""
+"""Check bootstrap setup without downloading dependencies."""
 
 import os
 import shutil
@@ -27,7 +27,7 @@ class BootstrapTests(unittest.TestCase):
         self.stale.parent.mkdir(parents=True)
         self.stale.touch()
 
-        # An isolated PATH makes the selected backend deterministic on any host.
+        # Isolate PATH so backend selection is deterministic.
         for name in ["dirname", "mkdir", "chmod"]:
             command = shutil.which(name)
             if command is None:
@@ -40,7 +40,11 @@ class BootstrapTests(unittest.TestCase):
         shutil.copyfile(FAKE_TOOL, tool)
         tool.chmod(0o755)
         return subprocess.run(
-            ["/bin/bash", str(ROOT / "scripts/bootstrap.sh"), str(self.runtime)],
+            [
+                "/bin/bash",
+                str(ROOT / "scripts/bootstrap.sh"),
+                str(self.runtime),
+            ],
             env=dict(
                 os.environ,
                 PATH=str(self.tools),
