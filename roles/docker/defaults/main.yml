@@ -79,7 +79,7 @@ docker_service_catalog:
 
 images:
   traefik: "traefik:v3.7.19"
-  qbittorrent: "lscr.io/linuxserver/qbittorrent:5.3.0"
+  qbittorrent: "lscr.io/linuxserver/qbittorrent:5.3.1"
   vaultwarden: "vaultwarden/server:1.37.5"
   jellyfin: "lscr.io/linuxserver/jellyfin:12.4ubu2604-ls60"
   syncthing: "lscr.io/linuxserver/syncthing:2.1.7"
