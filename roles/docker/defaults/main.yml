@@ -78,7 +78,7 @@ docker_service_catalog:
     tag: syncthing
 
 images:
-  traefik: "traefik:v3.7.19"
+  traefik: "traefik:v3.8.0"
   qbittorrent: "lscr.io/linuxserver/qbittorrent:5.3.1"
   vaultwarden: "vaultwarden/server:1.37.5"
   jellyfin: "lscr.io/linuxserver/jellyfin:12.4ubu2604-ls60"
